@@ -1,0 +1,8 @@
+{
+    "short_name": "MatrimonyConnect",
+    "name": "Matrimony Connect",
+    "start_url": ".",
+    "display": "standalone",
+    "theme_color": "#e11d48",
+    "background_color": "#fff"
+}
