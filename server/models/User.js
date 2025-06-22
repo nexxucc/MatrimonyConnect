@@ -71,7 +71,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         enum: ['male', 'female']
-    }
+    },
+    // OTPs for phone and email verification
+    phoneOtp: { type: String },
+    phoneOtpExpiresAt: { type: Date },
+    emailOtp: { type: String },
+    emailOtpExpiresAt: { type: Date },
+    // Store normalized email for lookup
+    emailNormalized: { type: String, index: true }
 }, {
     timestamps: true
 });
@@ -101,4 +108,23 @@ userSchema.methods.toJSON = function () {
     return user;
 };
 
-module.exports = mongoose.model('User', userSchema); 
+// Save normalized email before saving
+userSchema.pre('save', function (next) {
+    if (this.isModified('email')) {
+        this.emailNormalized = normalizeGmail(this.email);
+    }
+    next();
+});
+
+// Utility: Normalize Gmail address (removes dots from username part)
+function normalizeGmail(email) {
+    email = email.trim().toLowerCase();
+    const gmailRegex = /^([a-z0-9.]+)@gmail\.com$/;
+    const match = email.match(gmailRegex);
+    if (match) {
+        return match[1].replace(/\./g, '') + '@gmail.com';
+    }
+    return email;
+}
+
+module.exports = mongoose.model('User', userSchema);

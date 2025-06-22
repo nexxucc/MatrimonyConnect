@@ -10,7 +10,7 @@ import {
     EyeIcon,
     StarIcon
 } from '@heroicons/react/24/outline';
-import { userAPI } from '../services/api';
+import { userAPI, profileAPI, searchAPI } from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ProfileCard from '../components/profile/ProfileCard';
 import StatsCard from '../components/dashboard/StatsCard';
@@ -22,26 +22,45 @@ const DashboardPage = () => {
     // Fetch dashboard data
     const { data: dashboardData, isLoading, error } = useQuery({
         queryKey: ['dashboard'],
-        queryFn: () => userAPI.get('/profiles/dashboard'),
+        queryFn: () => profileAPI.getProfile(), // Changed from userAPI.get('/profiles/dashboard')
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 
     // Fetch daily matches
     const { data: dailyMatches } = useQuery({
         queryKey: ['daily-matches'],
-        queryFn: () => userAPI.get('/search/daily-matches'),
+        queryFn: () => searchAPI.getDailyMatches(), // Changed from userAPI.get('/search/daily-matches')
         staleTime: 10 * 60 * 1000, // 10 minutes
     });
 
     // Fetch user activity log
     const { data: activityLog, isLoading: loadingActivity } = useQuery({
         queryKey: ['activity-log'],
-        queryFn: () => userAPI.get('/users/activity-logs'),
+        queryFn: () => userAPI.getActivityLogs(), // Changed from userAPI.get('/users/activity-logs')
         staleTime: 2 * 60 * 1000,
     });
 
     if (isLoading) return <LoadingSpinner />;
+    // Handle 404 for missing profile
+    if (error && error.response?.status === 404) {
+        console.log('404 error:', error);
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Complete Your Profile</h2>
+                    <p className="text-gray-600 mb-4">You need to complete your profile to access the dashboard and matches.</p>
+                    <Link
+                        to="/profile/edit"
+                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                    >
+                        Complete Profile
+                    </Link>
+                </div>
+            </div>
+        );
+    }
     if (error) {
+        console.log('Other error:', error);
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
@@ -286,4 +305,4 @@ const DashboardPage = () => {
     );
 };
 
-export default DashboardPage; 
+export default DashboardPage;

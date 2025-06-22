@@ -3,8 +3,9 @@ const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const Profile = require('../models/Profile');
 const { auth } = require('../middleware/auth');
-const { sendOTP, verifyOTP } = require('../utils/otp');
+const { sendOTP, verifyOTP, sendUserOTP, sendWhatsAppOTP } = require('../utils/otp');
 const { sendEmail } = require('../utils/email');
 
 const router = express.Router();
@@ -13,6 +14,23 @@ const router = express.Router();
 const generateToken = (userId) => {
     return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
+
+// Utility: Normalize Gmail address (removes dots from username part)
+function normalizeGmail(email) {
+    email = email.trim().toLowerCase();
+    const gmailRegex = /^([a-z0-9.]+)@gmail\.com$/;
+    const match = email.match(gmailRegex);
+    if (match) {
+        return match[1].replace(/\./g, '') + '@gmail.com';
+    }
+    return email;
+}
+
+// Utility: Ensure valid date or fallback
+function getValidDateOrDefault(dateStr, fallback = '1990-01-01') {
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? new Date(fallback) : d;
+}
 
 // Register User
 router.post('/register', [
@@ -51,14 +69,60 @@ router.post('/register', [
             role: 'user'
         });
 
+        // Save normalized email for lookup
+        user.emailNormalized = normalizeGmail(email);
+
         await user.save();
 
-        // Send OTP for verification
-        const otp = await sendOTP(phone);
+        // --- AUTO-CREATE PROFILE FOR USER ---
+        // Use minimal/default values for required fields
+        let profile;
+        try {
+            profile = new Profile({
+                userId: user._id,
+                basicInfo: {
+                    firstName: name.split(' ')[0] || name,
+                    lastName: name.split(' ')[1] || name,
+                    dateOfBirth: getValidDateOrDefault(undefined), // Always valid
+                    gender: gender,
+                    maritalStatus: 'never_married', // Default, user should update
+                    children: 'no',
+                    height: 170, // Default height in cm
+                    weight: 70   // Default weight in kg
+                },
+                location: {
+                    country: 'India', // Default, user should update
+                    state: 'Unknown', // Default, user should update
+                    city: 'Unknown' // Default, user should update
+                },
+                religiousInfo: {
+                    religion: 'Hindu' // Default, user should update
+                },
+                education: {
+                    highestQualification: 'Bachelors' // Default, user should update
+                },
+                career: {
+                    profession: 'Other', // Default, user should update
+                    income: 'below_5_lakhs' // Default, user should update
+                }
+            });
+            await profile.save();
+        } catch (profileError) {
+            console.error('Profile creation error:', profileError);
+            // Rollback user creation if profile fails
+            await User.findByIdAndDelete(user._id);
+            return res.status(500).json({ message: 'Failed to create user profile. Please try again.' });
+        }
+        // --- END AUTO-CREATE PROFILE ---
 
-        // Store OTP temporarily (in production, use Redis)
-        user.otp = otp;
+        // Generate and store OTP, but do NOT send it yet
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        user.phoneOtp = otp;
+        user.emailOtp = otp;
+        user.phoneOtpExpiresAt = undefined;
+        user.emailOtpExpiresAt = undefined;
         await user.save();
+        // Do NOT send OTP here
 
         const token = generateToken(user._id);
 
@@ -81,7 +145,15 @@ router.post('/register', [
 
 // Verify OTP
 router.post('/verify-otp', [
-    body('phone').isMobilePhone(),
+    body('phone').custom(value => {
+        if (value === undefined || value === null) return true; // allow missing phone for email verification
+        const trimmed = value.trim();
+        console.log('Phone received for OTP verification:', trimmed);
+        if (!/^[+\d]{10,15}$/.test(trimmed)) {
+            throw new Error('Invalid phone format');
+        }
+        return true;
+    }),
     body('otp').isLength({ min: 4, max: 6 })
 ], async (req, res) => {
     try {
@@ -89,29 +161,39 @@ router.post('/verify-otp', [
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
-
-        const { phone, otp } = req.body;
-
-        const user = await User.findOne({ phone });
+        let { phone, email, otp } = req.body;
+        if (email) email = normalizeGmail(email);
+        if (phone) phone = phone.trim();
+        console.log('Verify OTP request:', { phone, email, otp });
+        let user;
+        if (phone) {
+            user = await User.findOne({ phone });
+        } else if (email) {
+            user = await User.findOne({ email });
+        } else {
+            return res.status(400).json({ message: 'Phone or email is required' });
+        }
         if (!user) {
+            console.log('User not found for:', { phone, email });
             return res.status(404).json({ message: 'User not found' });
         }
-
         if (user.isVerified) {
             return res.status(400).json({ message: 'User already verified' });
         }
-
-        // Verify OTP (in production, verify against stored OTP)
-        if (user.otp !== otp) {
+        // Unified OTP check: accept either phoneOtp or emailOtp
+        if (user.phoneOtp === otp || user.emailOtp === otp) {
+            user.isVerified = true;
+            user.phoneOtp = undefined;
+            user.emailOtp = undefined;
+        } else {
             return res.status(400).json({ message: 'Invalid OTP' });
         }
-
-        user.isVerified = true;
-        user.otp = undefined;
         await user.save();
-
+        // Generate a new token after verification so the frontend can use it for authenticated requests
+        const token = generateToken(user._id);
         res.json({
-            message: 'Phone number verified successfully',
+            message: 'Account verified successfully',
+            token,
             user: {
                 id: user._id,
                 email: user.email,
@@ -119,7 +201,6 @@ router.post('/verify-otp', [
                 isVerified: user.isVerified
             }
         });
-
     } catch (error) {
         console.error('OTP verification error:', error);
         res.status(500).json({ message: 'OTP verification failed' });
@@ -279,4 +360,34 @@ router.post('/logout', auth, async (req, res) => {
     }
 });
 
-module.exports = router; 
+// Send OTP (for phone or email)
+router.post('/send-otp', async (req, res) => {
+    try {
+        let { phone, email } = req.body;
+        if (email) email = normalizeGmail(email);
+        if (phone) phone = phone.trim();
+        let user;
+        if (phone) {
+            user = await User.findOne({ phone });
+        } else if (email) {
+            const normalized = normalizeGmail(email);
+            user = await User.findOne({ emailNormalized: normalized });
+        } else {
+            return res.status(400).json({ message: 'Phone or email is required' });
+        }
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (phone) {
+            await sendUserOTP(user, 'phone', sendWhatsAppOTP);
+        } else if (email) {
+            await sendUserOTP(user, 'email', sendEmail.bind(null, email, 'Your Matrimony Connect OTP'));
+        }
+        res.json({ message: 'OTP sent successfully' });
+    } catch (error) {
+        console.error('Send OTP error:', error);
+        res.status(500).json({ message: 'Failed to send OTP' });
+    }
+});
+
+module.exports = router;

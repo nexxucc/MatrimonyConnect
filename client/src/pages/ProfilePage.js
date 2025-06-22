@@ -25,16 +25,34 @@ const ProfilePage = () => {
     if (error) return <div className="p-8 text-center text-red-600">Failed to load profile.</div>;
     if (!data) return <div className="p-8 text-center">No profile found.</div>;
 
-    const profile = data;
+    const profile = data.profile || data;
+
+    // Defensive: flatten and fill missing fields for ProfileCard
+    const flatProfile = {
+        ...profile,
+        _id: profile._id || profile.id,
+        fullName: profile.basicInfo ? `${profile.basicInfo.firstName} ${profile.basicInfo.lastName}` : '',
+        age: profile.age || (profile.basicInfo && profile.basicInfo.dateOfBirth ? new Date().getFullYear() - new Date(profile.basicInfo.dateOfBirth).getFullYear() : ''),
+        religion: profile.religiousInfo?.religion || '',
+        caste: profile.religiousInfo?.caste || '',
+        city: profile.location?.city || '',
+        state: profile.location?.state || '',
+        profession: profile.career?.profession || '',
+        education: profile.education?.highestQualification || '',
+        photoUrl: (profile.photos && profile.photos.length > 0) ? profile.photos[0].url : undefined,
+        isVerified: profile.isVerified || false,
+        isPremium: profile.isPremium || false,
+        boostedUntil: profile.boostedUntil || null,
+    };
 
     return (
         <div className="max-w-3xl mx-auto py-8 px-4">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">My Profile</h1>
-            <ProfileCard profile={profile} />
-            {profile.boostedUntil && new Date(profile.boostedUntil) > new Date() && (
-                <div className="mt-4 text-green-600 font-semibold">Boosted until {new Date(profile.boostedUntil).toLocaleDateString()}</div>
+            <ProfileCard profile={flatProfile} />
+            {flatProfile.boostedUntil && new Date(flatProfile.boostedUntil) > new Date() && (
+                <div className="mt-4 text-green-600 font-semibold">Boosted until {new Date(flatProfile.boostedUntil).toLocaleDateString()}</div>
             )}
-            {profile.isPremium && (
+            {flatProfile.isPremium && (
                 <button
                     onClick={() => boostMutation.mutate()}
                     className="inline-flex items-center px-4 py-2 border border-pink-600 text-pink-600 rounded hover:bg-pink-600 hover:text-white text-sm font-medium transition-colors mt-4"
@@ -61,4 +79,4 @@ const ProfilePage = () => {
     );
 };
 
-export default ProfilePage; 
+export default ProfilePage;

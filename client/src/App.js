@@ -37,6 +37,7 @@ import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
+import VerificationChoicePage from './components/auth/VerificationChoicePage';
 
 // Loading Component
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -72,6 +73,7 @@ function App() {
                 <Route element={<GuestRoute />}>
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/verify" element={<VerificationChoicePage />} />
                     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
                 </Route>
@@ -108,4 +110,4 @@ function App() {
     );
 }
 
-export default App; 
+export default App;

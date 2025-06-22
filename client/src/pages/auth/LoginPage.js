@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -8,16 +8,21 @@ const LoginPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         try {
-            await authAPI.post('/auth/login', { email, password });
-            navigate('/dashboard');
+            setError("");
+            setLoading(true);
+            const result = await login({ email, password });
+            console.log("Login success", result);
+            // No need to navigate here, AuthContext handles it
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed');
+            setError('Login failed');
+            console.log('Login failed:', err);
         } finally {
             setLoading(false);
         }

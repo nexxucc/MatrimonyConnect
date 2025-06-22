@@ -1,34 +1,29 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter
-const createTransporter = () => {
-  return nodemailer.createTransporter({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 587,
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    }
-  });
-};
+// Create reusable transporter object using SMTP
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false, // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
 
 // Send email
 const sendEmail = async (to, subject, text, html = null) => {
   try {
-    const transporter = createTransporter();
-
     const mailOptions = {
       from: process.env.SMTP_FROM || 'noreply@matrimonyconnect.com',
       to,
       subject,
-      text,
-      html: html || text
+      text: text || undefined,
+      html: html || undefined
     };
-
     const info = await transporter.sendMail(mailOptions);
     if (process.env.NODE_ENV === 'development') {
-      console.log('Email sent:', info.messageId);
+      console.log('Email sent:', info.messageId || info);
     }
     return info;
   } catch (error) {
@@ -130,4 +125,4 @@ module.exports = {
   sendInterestNotification,
   sendMatchAlert,
   sendProfileApprovalEmail
-}; 
+};

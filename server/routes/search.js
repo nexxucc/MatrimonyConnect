@@ -195,6 +195,14 @@ router.get('/daily-matches', auth, async (req, res) => {
             }));
         }
 
+        // Defensive: Remove invalid dateOfBirth from query
+        if (query['basicInfo.dateOfBirth']) {
+            const { $gte, $lte } = query['basicInfo.dateOfBirth'];
+            if (isNaN($gte?.getTime()) || isNaN($lte?.getTime())) {
+                delete query['basicInfo.dateOfBirth'];
+            }
+        }
+
         // Get 10 daily matches
         const matches = await Profile.find(query)
             .populate('userId', 'email phone role subscription')
@@ -331,4 +339,4 @@ router.get('/filters', auth, async (req, res) => {
     }
 });
 
-module.exports = router; 
+module.exports = router;

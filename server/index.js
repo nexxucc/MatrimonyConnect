@@ -15,6 +15,7 @@ const interestRoutes = require('./routes/interests');
 const chatRoutes = require('./routes/chat');
 const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
+const sendOtpRoutes = require('./routes/sendOtp');
 const User = require('./models/User');
 
 const app = express();
@@ -38,7 +39,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // CORS configuration
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    // origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: 'http://localhost:3000',
     credentials: true
 }));
 
@@ -57,6 +59,7 @@ app.use('/api/interests', interestRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/send-otp', sendOtpRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -104,4 +107,4 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/matrimony
         process.exit(1);
     });
 
-module.exports = app; 
+module.exports = app;

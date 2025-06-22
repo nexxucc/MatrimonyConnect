@@ -11,15 +11,13 @@ const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Send OTP via SMS
-const sendOTP = async (phoneNumber) => {
+// Send OTP via SMS (accepts OTP as argument)
+const sendOTP = async (phoneNumber, otp) => {
     try {
-        const otp = generateOTP();
-
         // In development, just log the OTP
         if (process.env.NODE_ENV === 'development') {
             console.log(`OTP for ${phoneNumber}: ${otp}`);
-            return otp;
+            return;
         }
 
         // In production, send via Twilio
@@ -28,11 +26,29 @@ const sendOTP = async (phoneNumber) => {
             from: process.env.TWILIO_PHONE_NUMBER,
             to: phoneNumber
         });
-
-        return otp;
     } catch (error) {
         console.error('Error sending OTP:', error);
         throw new Error('Failed to send OTP');
+    }
+};
+
+// Send OTP via WhatsApp (accepts OTP as argument)
+const sendWhatsAppOTP = async (phoneNumber, otp) => {
+    try {
+        // In development, just log the OTP
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`WhatsApp OTP for ${phoneNumber}: ${otp}`);
+            return;
+        }
+        // In production, send via Twilio WhatsApp
+        await client.messages.create({
+            body: `Your Matrimony Connect verification code is: ${otp}. Valid for 10 minutes.`,
+            from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
+            to: `whatsapp:${phoneNumber}`
+        });
+    } catch (error) {
+        console.error('Error sending WhatsApp OTP:', error);
+        throw new Error('Failed to send WhatsApp OTP');
     }
 };
 
@@ -64,9 +80,74 @@ const resendOTP = async (phoneNumber) => {
     }
 };
 
+// Check if OTP is still valid (expiry in ms, default 10 min)
+const isOTPValid = (otpExpiresAt) => {
+    if (!otpExpiresAt) return false;
+    return new Date() < new Date(otpExpiresAt);
+};
+
+/**
+ * Get or create OTP for a user (email or phone)
+ * @param {object} user - Mongoose user document
+ * @param {string} type - 'email' or 'phone'
+ * @param {number} expiryMinutes - OTP validity in minutes (default 10)
+ * @returns {Promise<string>} - The OTP
+ */
+const getOrCreateOTP = async (user, type, expiryMinutes = 10) => {
+    const otpField = type === 'email' ? 'emailOtp' : 'phoneOtp';
+    const expiresAtField = type === 'email' ? 'emailOtpExpiresAt' : 'phoneOtpExpiresAt';
+
+    // If valid OTP exists, return it
+    if (user[otpField] && isOTPValid(user[expiresAtField])) {
+        return user[otpField];
+    }
+    // Otherwise, generate new OTP
+    const otp = generateOTP();
+    const expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
+    user[otpField] = otp;
+    user[expiresAtField] = expiresAt;
+    await user.save();
+    return otp;
+};
+
+/**
+ * Send OTP to user (email or phone) and set expiry when sent.
+ * @param {object} user - Mongoose user document
+ * @param {string} type - 'email' or 'phone'
+ * @param {function} sendFn - Function to send OTP (e.g., sendOTP for phone, your email sender for email)
+ * @param {number} expiryMinutes - OTP validity in minutes (default 10)
+ * @returns {Promise<string>} - The OTP sent
+ */
+const sendUserOTP = async (user, type, sendFn, expiryMinutes = 10) => {
+    const otpField = type === 'email' ? 'emailOtp' : 'phoneOtp';
+    const expiresAtField = type === 'email' ? 'emailOtpExpiresAt' : 'phoneOtpExpiresAt';
+    const contactField = type === 'email' ? 'email' : 'phone';
+
+    let otp = user[otpField];
+    let expiresAt = user[expiresAtField];
+
+    // If OTP exists and is still valid, just resend it
+    if (otp && isOTPValid(expiresAt)) {
+        await sendFn(user[contactField], otp);
+        return otp;
+    }
+    // If OTP does not exist or expired, generate new OTP and set expiry
+    otp = generateOTP();
+    expiresAt = new Date(Date.now() + expiryMinutes * 60 * 1000);
+    user[otpField] = otp;
+    user[expiresAtField] = expiresAt;
+    await user.save();
+    await sendFn(user[contactField], otp);
+    return otp;
+};
+
 module.exports = {
     generateOTP,
     sendOTP,
+    sendWhatsAppOTP,
     verifyOTP,
-    resendOTP
-}; 
+    resendOTP,
+    isOTPValid,
+    getOrCreateOTP,
+    sendUserOTP
+};

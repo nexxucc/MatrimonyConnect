@@ -45,6 +45,7 @@ export const authAPI = {
     resetPassword: (data) => api.post('/auth/reset-password', data),
     getMe: () => api.get('/auth/me'),
     logout: () => api.post('/auth/logout'),
+    sendVerificationOTP: (data) => api.post('/send-otp', data),
 };
 
 // Profile API
@@ -116,6 +117,7 @@ export const userAPI = {
     changePassword: (data) => api.put('/users/password', data),
     deleteAccount: () => api.delete('/users/account'),
     getStats: () => api.get('/users/stats'),
+    getActivityLogs: () => api.get('/users/activity-logs'), // Added method
 };
 
-export default api; 
+export default api;
