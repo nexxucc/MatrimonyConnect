@@ -94,6 +94,8 @@ router.get('/me', auth, async (req, res) => {
             .populate('userId', 'email phone role subscription');
 
         if (!profile) {
+            // Instead of creating a basic profile automatically, return a 404
+            // This will allow the frontend to redirect to the profile creation page
             return res.status(404).json({ message: 'Profile not found' });
         }
 
@@ -106,26 +108,49 @@ router.get('/me', auth, async (req, res) => {
 
 // Get Profile by ID (for viewing other profiles)
 router.get('/:profileId', auth, async (req, res) => {
+    // Log auth details for debugging
+    console.log('Auth info for profile request:', {
+        userId: req.user?._id,
+        userEmail: req.user?.email,
+        isAuthenticated: !!req.user
+    });
     try {
+        console.log(`Fetching profile with ID: ${req.params.profileId}`);
+
+        // Check if it's a valid MongoDB ObjectId
+        if (!req.params.profileId.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).json({ message: 'Invalid profile ID format' });
+        }
+
         const profile = await Profile.findById(req.params.profileId)
             .populate('userId', 'email phone role subscription');
 
         if (!profile) {
+            console.log(`Profile not found for ID: ${req.params.profileId}`);
             return res.status(404).json({ message: 'Profile not found' });
         }
 
-        // Check if profile is approved and visible
-        if (!profile.isProfileApproved) {
-            return res.status(404).json({ message: 'Profile not found' });
+        // Check if profile is approved and visible - but allow the owner to see their own profile
+        if (!profile.isProfileApproved && profile.userId._id.toString() !== req.user._id.toString()) {
+            console.log(`Profile not approved: ${req.params.profileId}`);
+            return res.status(403).json({ message: 'This profile is not yet approved or visible' });
+        }// Apply privacy settings - provide a restricted public view if not authenticated
+        let publicProfile;
+        if (req.user) {
+            publicProfile = applyPrivacySettings(profile, req.user._id);
+        } else {
+            // If somehow this route is accessed without authentication, provide limited data
+            publicProfile = applyPrivacySettings(profile, null);
         }
 
-        // Apply privacy settings
-        const publicProfile = applyPrivacySettings(profile, req.user._id);
+        // Log successful profile fetch
+        console.log(`Successfully fetched profile: ${req.params.profileId}`);
 
-        res.json({ profile: publicProfile });
+        // Return the profile data directly (not nested)
+        res.json(publicProfile);
     } catch (error) {
         console.error('Get profile by ID error:', error);
-        res.status(500).json({ message: 'Failed to get profile' });
+        res.status(500).json({ message: 'Failed to get profile', error: error.message });
     }
 });
 
@@ -403,7 +428,7 @@ const applyPrivacySettings = (profile, viewerId) => {
     const publicProfile = { ...profile.toObject() };
 
     // If viewing own profile, show everything
-    if (profile.userId._id.toString() === viewerId.toString()) {
+    if (viewerId && profile.userId._id.toString() === viewerId.toString()) {
         return publicProfile;
     }
 
@@ -427,4 +452,4 @@ const applyPrivacySettings = (profile, viewerId) => {
     return publicProfile;
 };
 
-module.exports = router; 
+module.exports = router;

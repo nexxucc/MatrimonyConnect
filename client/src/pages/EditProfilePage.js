@@ -1,178 +1,320 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { profileAPI } from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const EditProfilePage = () => {
     const queryClient = useQueryClient();
-    const { data, isLoading, error } = useQuery({
-        queryKey: ['my-profile'],
-        queryFn: () => profileAPI.get('/profiles/me'),
-    });
-    const [form, setForm] = useState(null);
-    React.useEffect(() => {
-        if (data) setForm(data);
-    }, [data]);
+    const navigate = useNavigate();    // Create initial form state for a new profile
+    const initialFormState = {
+        basicInfo: {
+            firstName: '',
+            lastName: '',
+            dateOfBirth: '',
+            gender: 'male',
+            maritalStatus: 'never_married',
+            children: 'no',
+            physicalStatus: 'normal'
+        },
+        location: {
+            country: 'India',
+            state: '',
+            city: '',
+            willingToRelocate: true
+        },
+        religiousInfo: {
+            religion: 'Hindu',
+            caste: '',
+            motherTongue: ''
+        },
+        education: {
+            highestQualification: 'Bachelors'
+        },
+        career: {
+            profession: '',
+            income: 'below_5_lakhs'
+        },
+        preferences: {
+            ageMin: 18,
+            ageMax: 40,
+            heightMin: 150,
+            heightMax: 190,
+            interestedIn: 'opposite' // 'opposite', 'same', or 'both'
+        },
+        about: '',
+        isProfileComplete: false
+    };
 
-    const mutation = useMutation({
-        mutationFn: (updated) => profileAPI.put('/profiles/me', updated),
+    const [form, setForm] = useState(initialFormState);
+    const [isNewProfile, setIsNewProfile] = useState(false);
+    const [loading, setLoading] = useState(true); const { data, isLoading } = useQuery({
+        queryKey: ['my-profile'],
+        queryFn: () => profileAPI.getProfile(),
+        retry: 1,
+        onError: (err) => {
+            if (err.response && err.response.status === 404) {
+                // Profile doesn't exist yet
+                setIsNewProfile(true);
+            }
+            setLoading(false);
+        },
+        onSuccess: () => {
+            setLoading(false);
+        }
+    }); useEffect(() => {
+        // Handle profile data loading
+        if (data?.profile) {
+            setForm(data.profile);
+            setIsNewProfile(false);
+            setLoading(false);
+        } else if (!isLoading) {
+            // If done loading and no profile data, either it's a 404 (new profile)
+            // or some other issue, but we should stop the loading state
+            setLoading(false);
+        }
+    }, [data, isLoading]); const mutation = useMutation({
+        mutationFn: (profileData) => profileAPI.updateProfile(profileData),
         onSuccess: () => {
             queryClient.invalidateQueries(['my-profile']);
-            alert('Profile updated!');
+            // After profile creation, navigate to search page (discover people)
+            // If it's a new profile, go to search, otherwise back to profile
+            if (isNewProfile) {
+                navigate('/search');
+            } else {
+                navigate('/profile');
+            }
         },
+        onError: (error) => {
+            console.error("Failed to save profile:", error);
+            alert('Failed to save profile. Please check the form and try again.');
+        }
     });
 
-    if (isLoading || !form) return <LoadingSpinner />;
-    if (error) return <div className="p-8 text-center text-red-600">Failed to load profile.</div>;
+    if (loading) return <LoadingSpinner />;
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        mutation.mutate(form);
-    };
-
-    // Privacy settings UI
-    const handlePrivacyChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setForm((prev) => ({
+    const handleChange = (section, field, value) => {
+        setForm(prev => ({
             ...prev,
-            privacySettings: {
-                ...prev.privacySettings,
-                [name]: type === 'checkbox' ? checked : value
+            [section]: {
+                ...prev[section],
+                [field]: value
             }
         }));
     };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        // Mark the profile as complete
+        const completeForm = {
+            ...form,
+            isProfileComplete: true
+        };
+        mutation.mutate(completeForm);
+    };
+
     return (
-        <div className="max-w-2xl mx-auto py-8 px-4">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h1>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                    <input
-                        type="text"
-                        name="fullName"
-                        value={form.fullName || ''}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        required
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Age</label>
-                    <input
-                        type="number"
-                        name="age"
-                        value={form.age || ''}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                        required
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Religion</label>
-                    <input
-                        type="text"
-                        name="religion"
-                        value={form.religion || ''}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Caste</label>
-                    <input
-                        type="text"
-                        name="caste"
-                        value={form.caste || ''}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">City</label>
-                    <input
-                        type="text"
-                        name="city"
-                        value={form.city || ''}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">State</label>
-                    <input
-                        type="text"
-                        name="state"
-                        value={form.state || ''}
-                        onChange={handleChange}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 mt-8">Privacy Settings</h2>
-                <div className="space-y-4 bg-gray-50 rounded-lg p-4 mb-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Hide Profile</label>
-                        <input
-                            type="checkbox"
-                            name="isHidden"
-                            checked={form.privacySettings?.isHidden || false}
-                            onChange={handlePrivacyChange}
-                            className="mr-2"
-                        />
-                        <span className="text-gray-600">Hide my profile from search and public view</span>
+        <div className="max-w-3xl mx-auto py-8 px-4 sm:px-6">
+            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                <h1 className="text-2xl font-bold text-gray-900 mb-6">
+                    {isNewProfile ? 'Create Your Profile' : 'Edit Your Profile'}
+                </h1>
+
+                {mutation.isLoading ? (
+                    <div className="text-center py-10">
+                        <LoadingSpinner />
+                        <p className="mt-4 text-gray-600">Saving your profile...</p>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Who can contact me?</label>
-                        <select
-                            name="whoCanContact"
-                            value={form.privacySettings?.whoCanContact || 'all'}
-                            onChange={handlePrivacyChange}
-                            className="mt-1 block w-full border-gray-300 rounded-md"
-                        >
-                            <option value="all">Anyone</option>
-                            <option value="matches">Only my matches</option>
-                            <option value="none">No one</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Show Photos</label>
-                        <input
-                            type="checkbox"
-                            name="showPhotos"
-                            checked={form.privacySettings?.showPhotos || false}
-                            onChange={handlePrivacyChange}
-                            className="mr-2"
-                        />
-                        <span className="text-gray-600">Allow others to see my photos</span>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Show Contact Info</label>
-                        <input
-                            type="checkbox"
-                            name="showContact"
-                            checked={form.privacySettings?.showContact || false}
-                            onChange={handlePrivacyChange}
-                            className="mr-2"
-                        />
-                        <span className="text-gray-600">Allow others to see my contact info</span>
-                    </div>
-                </div>
-                {/* Add more fields as needed */}
-                <button
-                    type="submit"
-                    className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
-                    disabled={mutation.isLoading}
-                >
-                    {mutation.isLoading ? 'Saving...' : 'Save Changes'}
-                </button>
-            </form>
+                ) : (
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        {/* Basic Info Section */}
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <h2 className="text-lg font-medium text-gray-800 mb-4">Basic Information</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">First Name*</label>
+                                    <input
+                                        type="text"
+                                        value={form.basicInfo?.firstName || ''}
+                                        onChange={(e) => handleChange('basicInfo', 'firstName', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Last Name*</label>
+                                    <input
+                                        type="text"
+                                        value={form.basicInfo?.lastName || ''}
+                                        onChange={(e) => handleChange('basicInfo', 'lastName', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Date of Birth*</label>
+                                    <input
+                                        type="date"
+                                        value={form.basicInfo?.dateOfBirth ? new Date(form.basicInfo.dateOfBirth).toISOString().split('T')[0] : ''}
+                                        onChange={(e) => handleChange('basicInfo', 'dateOfBirth', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Gender*</label>
+                                    <select
+                                        value={form.basicInfo?.gender || 'male'}
+                                        onChange={(e) => handleChange('basicInfo', 'gender', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                        required
+                                    >
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Location Section */}
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <h2 className="text-lg font-medium text-gray-800 mb-4">Location</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Country*</label>
+                                    <input
+                                        type="text"
+                                        value={form.location?.country || ''}
+                                        onChange={(e) => handleChange('location', 'country', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">State*</label>
+                                    <input
+                                        type="text"
+                                        value={form.location?.state || ''}
+                                        onChange={(e) => handleChange('location', 'state', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">City*</label>
+                                    <input
+                                        type="text"
+                                        value={form.location?.city || ''}
+                                        onChange={(e) => handleChange('location', 'city', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Religious Info Section */}
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <h2 className="text-lg font-medium text-gray-800 mb-4">Religious Information</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Religion*</label>
+                                    <input
+                                        type="text"
+                                        value={form.religiousInfo?.religion || ''}
+                                        onChange={(e) => handleChange('religiousInfo', 'religion', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Caste</label>
+                                    <input
+                                        type="text"
+                                        value={form.religiousInfo?.caste || ''}
+                                        onChange={(e) => handleChange('religiousInfo', 'caste', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                    />
+                                </div>
+                            </div>
+                        </div>                        {/* Career & Education Section */}
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <h2 className="text-lg font-medium text-gray-800 mb-4">Career & Education</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Profession*</label>
+                                    <input
+                                        type="text"
+                                        value={form.career?.profession || ''}
+                                        onChange={(e) => handleChange('career', 'profession', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Highest Education*</label>
+                                    <input
+                                        type="text"
+                                        value={form.education?.highestQualification || ''}
+                                        onChange={(e) => handleChange('education', 'highestQualification', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Preferences Section */}
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <h2 className="text-lg font-medium text-gray-800 mb-4">Preferences</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">I am interested in*</label>
+                                    <select
+                                        value={form.preferences?.interestedIn || 'opposite'}
+                                        onChange={(e) => handleChange('preferences', 'interestedIn', e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                        required
+                                    >
+                                        <option value="opposite">{form.basicInfo?.gender === 'male' ? 'Women' : 'Men'}</option>
+                                        <option value="same">{form.basicInfo?.gender === 'male' ? 'Men' : 'Women'}</option>
+                                        <option value="both">Both</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* About Me Section */}
+                        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <h2 className="text-lg font-medium text-gray-800 mb-4">About Me</h2>
+                            <div>
+                                <textarea
+                                    value={form.about || ''}
+                                    onChange={(e) => setForm(prev => ({ ...prev, about: e.target.value }))}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring focus:ring-pink-500 focus:ring-opacity-50"
+                                    rows={4}
+                                    placeholder="Tell us about yourself..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className="text-right">
+                            <button
+                                type="submit"
+                                className="px-6 py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-lg hover:from-pink-600 hover:to-rose-600 transition-colors shadow-sm"
+                                disabled={mutation.isLoading}
+                            >
+                                {isNewProfile ? 'Create Profile' : 'Save Changes'}
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </div>
         </div>
     );
-};
+}
 
-export default EditProfilePage; 
+export default EditProfilePage;

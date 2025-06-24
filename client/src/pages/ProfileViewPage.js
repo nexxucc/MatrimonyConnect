@@ -8,9 +8,17 @@ import ProfileCard from '../components/profile/ProfileCard';
 const ProfileViewPage = () => {
     const { id } = useParams();
     const queryClient = useQueryClient();
+
     const { data, isLoading, error } = useQuery({
         queryKey: ['profile', id],
-        queryFn: () => profileAPI.get(`/profiles/${id}`),
+        queryFn: () => profileAPI.getProfileById(id),
+        retry: 1, // Only retry once in case of failure
+        onError: (err) => {
+            console.error('Profile fetch error:', err);
+            if (err.response?.status === 403) {
+                console.log('Permission denied to view profile');
+            }
+        }
     });
 
     const interestMutation = useMutation({
@@ -24,15 +32,42 @@ const ProfileViewPage = () => {
     const blockMutation = useMutation({
         mutationFn: () => profileAPI.post(`/profiles/block/${data?.userId}`),
         onSuccess: () => alert('User blocked!'),
-    });
-
-    const reportMutation = useMutation({
+    }); const reportMutation = useMutation({
         mutationFn: (reason) => profileAPI.post(`/profiles/report/${data?._id}`, { reason }),
         onSuccess: () => alert('User reported!'),
     });
 
     if (isLoading) return <LoadingSpinner />;
-    if (error) return <div className="p-8 text-center text-red-600">Profile not found.</div>;
+
+    if (error) {
+        console.error('Profile view error:', error);
+        // Check for specific error types
+        const is403 = error.response?.status === 403;
+        const is404 = error.response?.status === 404;
+        const errorMessage = error.response?.data?.message || 'Unable to load profile';
+
+        // Determine appropriate title and message based on error type
+        let title = 'Error Loading Profile';
+        let message = 'There was a problem loading this profile: ' + errorMessage;
+
+        if (is403) {
+            title = 'Access Denied';
+            message = 'This profile is not yet approved or you don\'t have permission to view it.';
+        } else if (is404) {
+            title = 'Profile Not Found';
+            message = 'The profile you requested does not exist.';
+        }
+
+        return (
+            <div className="p-8 text-center">
+                <div className="text-red-600 text-xl mb-2">{title}</div>
+                <div className="text-gray-500 text-sm">{message}</div>
+                <Link to="/search" className="inline-block mt-4 text-blue-600 hover:text-blue-800">
+                    Search for other profiles
+                </Link>
+            </div>
+        );
+    }
     if (!data) return <div className="p-8 text-center">No profile found.</div>;
 
     const profile = data;

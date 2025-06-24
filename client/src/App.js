@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from './contexts/AuthContext';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
+import ServerStatusChecker from './components/common/ServerStatusChecker';
 
 // Layout Components
 import Layout from './components/layout/Layout';
@@ -11,7 +12,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import GuestRoute from './components/auth/GuestRoute';
 
 // Page Components
-import HomePage from './pages/HomePage';
+import HomePageSimple from './pages/HomePageSimple';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
@@ -46,6 +47,10 @@ import LanguageSwitcher from './components/common/LanguageSwitcher';
 function App() {
     const { loading } = useAuth();
 
+    useEffect(() => {
+        console.log('App component mounted, loading state:', loading);
+    }, [loading]);
+
     if (loading) {
         return <LoadingSpinner />;
     }
@@ -56,24 +61,22 @@ function App() {
             <Helmet>
                 <title>Matrimony Connect - Find Your Perfect Match</title>
                 <meta name="description" content="Join thousands of people who found their life partner on Matrimony Connect. Secure, trusted, and personalized matchmaking platform." />
-            </Helmet>
-
-            <Routes>
+            </Helmet>            <Routes>
                 {/* Public Routes */}
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<HomePageSimple />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/how-it-works" element={<HowItWorksPage />} />
                 <Route path="/success-stories" element={<SuccessStoriesPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/faq" element={<FAQPage />} />
                 <Route path="/terms" element={<TermsPage />} />
-                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />                {/* Public but special routes (like verification) */}
+                <Route path="/verify" element={<VerificationChoicePage />} />
 
                 {/* Guest Routes */}
                 <Route element={<GuestRoute />}>
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
-                    <Route path="/verify" element={<VerificationChoicePage />} />
                     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
                 </Route>
@@ -104,8 +107,8 @@ function App() {
                 </Route>
 
                 {/* 404 Route */}
-                <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+                <Route path="*" element={<NotFoundPage />} />            </Routes>
+            <ServerStatusChecker />
         </I18nextProvider>
     );
 }

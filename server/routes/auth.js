@@ -232,11 +232,11 @@ router.post('/login', [
 
         if (!user.isActive) {
             return res.status(401).json({ message: 'Account is deactivated' });
-        }
-
-        // Update last login
-        user.lastLogin = new Date();
-        await user.save();
+        }        // Update last login
+        await User.findByIdAndUpdate(user._id, {
+            lastLogin: new Date(),
+            $push: { loginHistory: { time: new Date(), ip: req.ip } }
+        });
 
         const token = generateToken(user._id);
 

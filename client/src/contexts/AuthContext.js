@@ -69,9 +69,7 @@ export const AuthProvider = ({ children }) => {
         } else {
             delete api.defaults.headers.common['Authorization'];
         }
-    }, [state.token]);
-
-    // Check if user is authenticated on app load
+    }, [state.token]);    // Check if user is authenticated on app load
     useEffect(() => {
         const checkAuth = async () => {
             if (state.token) {
@@ -86,7 +84,10 @@ export const AuthProvider = ({ children }) => {
                     });
                 } catch (error) {
                     console.error('Auth check failed:', error);
-                    localStorage.removeItem('token');
+                    // Only remove token if it's a 401 error
+                    if (error.response && error.response.status === 401) {
+                        localStorage.removeItem('token');
+                    }
                     dispatch({ type: 'LOGIN_FAILURE' });
                 }
             } else {
@@ -94,10 +95,13 @@ export const AuthProvider = ({ children }) => {
             }
         };
 
-        checkAuth();
-    }, []);
+        // Add a small delay to prevent race conditions
+        const timer = setTimeout(() => {
+            checkAuth();
+        }, 100);
 
-    const login = async (credentials) => {
+        return () => clearTimeout(timer);
+    }, [state.token]); const login = async (credentials) => {
         dispatch({ type: 'LOGIN_START' });
 
         try {
@@ -106,12 +110,22 @@ export const AuthProvider = ({ children }) => {
 
             localStorage.setItem('token', token);
 
-            dispatch({
-                type: 'LOGIN_SUCCESS',
-                payload: { user, token },
-            });
+            // Verify that the token works by making a test request
+            try {
+                await api.get('/auth/me');
 
-            toast.success('Login successful!');
+                dispatch({
+                    type: 'LOGIN_SUCCESS',
+                    payload: { user, token },
+                });
+
+                toast.success('Login successful!');
+            } catch (verifyError) {
+                console.error('Token verification failed:', verifyError);
+                localStorage.removeItem('token');
+                dispatch({ type: 'LOGIN_FAILURE' });
+                toast.error('Authentication failed. Please try again.');
+            }
             navigate('/dashboard');
 
             return { success: true };
@@ -121,9 +135,7 @@ export const AuthProvider = ({ children }) => {
             dispatch({ type: 'LOGIN_FAILURE' });
             return { success: false, error: message };
         }
-    };
-
-    const register = async (userData) => {
+    }; const register = async (userData) => {
         dispatch({ type: 'LOGIN_START' });
 
         try {
@@ -137,8 +149,8 @@ export const AuthProvider = ({ children }) => {
                 payload: { user, token },
             });
 
-            toast.success('Registration successful! Please verify your phone number.');
-            navigate('/dashboard');
+            toast.success('Registration successful! Please verify your account.');
+            navigate('/verify', { state: { email: userData.email, phone: userData.phone } });
 
             return { success: true };
         } catch (error) {
@@ -147,9 +159,7 @@ export const AuthProvider = ({ children }) => {
             dispatch({ type: 'LOGIN_FAILURE' });
             return { success: false, error: message };
         }
-    };
-
-    const verifyOTP = async (otpData) => {
+    }; const verifyOTP = async (otpData) => {
         try {
             const response = await api.post('/auth/verify-otp', otpData);
             const { user } = response.data;
@@ -159,7 +169,8 @@ export const AuthProvider = ({ children }) => {
                 payload: user,
             });
 
-            toast.success('Phone number verified successfully!');
+            toast.success('Account verified successfully!');
+            // Don't navigate here - let the component handle navigation
             return { success: true };
         } catch (error) {
             const message = error.response?.data?.message || 'OTP verification failed';

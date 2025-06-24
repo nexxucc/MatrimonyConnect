@@ -16,6 +16,8 @@ const chatRoutes = require('./routes/chat');
 const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
 const sendOtpRoutes = require('./routes/sendOtp');
+const analyticsRoutes = require('./routes/analytics');
+const successStoriesRoutes = require('./routes/successStories');
 const User = require('./models/User');
 
 const app = express();
@@ -37,11 +39,12 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// CORS configuration
+// CORS configuration - More permissive for local development
 app.use(cors({
-    // origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    origin: 'http://localhost:3000',
-    credentials: true
+    origin: true, // Allow all origins for development
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Logging middleware
@@ -60,6 +63,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/send-otp', sendOtpRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/success-stories', successStoriesRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
