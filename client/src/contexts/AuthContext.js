@@ -120,13 +120,13 @@ export const AuthProvider = ({ children }) => {
                 });
 
                 toast.success('Login successful!');
+                navigate('/dashboard');
             } catch (verifyError) {
                 console.error('Token verification failed:', verifyError);
                 localStorage.removeItem('token');
                 dispatch({ type: 'LOGIN_FAILURE' });
                 toast.error('Authentication failed. Please try again.');
             }
-            navigate('/dashboard');
 
             return { success: true };
         } catch (error) {
@@ -223,7 +223,11 @@ export const AuthProvider = ({ children }) => {
     };
 
     const isPremium = () => {
-        return state.user?.subscription?.isActive || state.user?.role === 'admin';
+        if (state.user?.role === 'admin') return true;
+        const sub = state.user?.subscription;
+        if (!sub?.isActive) return false;
+        if (sub.endDate && new Date(sub.endDate) < new Date()) return false;
+        return true;
     };
 
     const value = {

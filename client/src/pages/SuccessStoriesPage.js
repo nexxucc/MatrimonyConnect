@@ -5,13 +5,13 @@ const sampleStories = [
     {
         name: 'Priya & Rahul',
         location: 'Mumbai',
-        text: 'We found each other on Matrimony Connect and got married within 6 months. Thank you for helping us find our perfect match!',
+        text: 'We matched on Matrimony Connect and were married six months later. Honestly didn\'t think it would happen this fast.',
         photo: '/couple1.jpg'
     },
     {
         name: 'Anjali & Vikram',
         location: 'Delhi',
-        text: 'The platform made it so easy to connect with like-minded people. We are grateful for this wonderful journey.',
+        text: 'It was easy to find people who shared our values. We talked for a while, the families met, and it all just clicked.',
         photo: '/couple2.jpg'
     },
 ];

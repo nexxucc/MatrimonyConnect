@@ -107,7 +107,7 @@ router.get('/stats', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
 
-        // You can add more statistics here based on user activity
+        // Additional statistics can be added here
         const stats = {
             profileScore: 0,
             interestsReceived: 0,

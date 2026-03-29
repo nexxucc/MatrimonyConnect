@@ -83,11 +83,12 @@ const processContactRequest = async (chat, messageId, user, accept) => {
 
 const updateChatActivity = async (userId, chatId, type, metadata = {}) => {
     await logActivity({
-        userId,
-        activityType: type,
-        entityType: 'chat',
-        entityId: chatId,
-        metadata
+        user: userId,
+        type: 'other',
+        target: chatId,
+        targetModel: 'Chat',
+        description: type,
+        meta: metadata
     });
 };
 
@@ -270,7 +271,7 @@ router.get('/:chatId', premiumAuth, async (req, res) => {
 
             await logActivity({
                 user: req.user._id,
-                type: 'chat_read',
+                type: 'other',
                 target: chat._id,
                 targetModel: 'Chat',
                 description: 'Chat messages read'
@@ -351,7 +352,7 @@ router.post('/:chatId/messages', premiumAuth, [
         // Log activity
         await logActivity({
             user: req.user._id,
-            type: 'chat_message',
+            type: 'chat_message_sent',
             target: chat._id,
             targetModel: 'Chat',
             description: 'Message sent',
@@ -404,7 +405,7 @@ router.delete('/:chatId', auth, async (req, res) => {
 
         await logActivity({
             user: req.user._id,
-            type: 'chat_archived',
+            type: 'other',
             target: chat._id,
             targetModel: 'Chat',
             description: 'Chat archived'
@@ -490,7 +491,7 @@ router.post('/:chatId/request-contact', premiumAuth, async (req, res) => {
 
         await logActivity({
             user: req.user._id,
-            type: 'contact_requested',
+            type: 'other',
             target: chat._id,
             targetModel: 'Chat',
             targetUser: otherUserId,
@@ -539,7 +540,7 @@ router.post('/:chatId/contact-response/:messageId', auth, [
 
         await logActivity({
             user: req.user._id,
-            type: accept ? 'contact_shared' : 'contact_declined',
+            type: accept ? 'contact_view' : 'other',
             target: chat._id,
             targetModel: 'Chat',
             targetUser: otherUserId,

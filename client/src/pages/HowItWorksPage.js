@@ -4,27 +4,27 @@ import { Helmet } from 'react-helmet-async';
 const steps = [
     {
         title: 'Register & Verify',
-        description: 'Sign up with your email or phone, verify your identity with OTP, and set up your secure account.'
+        description: 'Create an account with your email or phone number. We\'ll send you a code to verify it\'s really you.'
     },
     {
         title: 'Create Your Profile',
-        description: 'Fill in your personal details, preferences, and upload photos to complete your profile.'
+        description: 'Add your details, write a bit about yourself, and upload some recent photos. The more complete your profile, the better your matches.'
     },
     {
         title: 'Search & Discover',
-        description: 'Use advanced filters to search for compatible matches based on your criteria.'
+        description: 'Filter by age, location, religion, education, and more to find people who fit what you\'re looking for.'
     },
     {
         title: 'Express Interest',
-        description: 'Send interest requests to profiles you like and receive interests from others.'
+        description: 'See someone you like? Send them an interest and include a personal note if you want.'
     },
     {
         title: 'Connect & Chat',
-        description: 'Upgrade to premium to chat with your matches and get to know them better.'
+        description: 'Once an interest is accepted, open up a conversation. Premium members get full chat access.'
     },
     {
         title: 'Find Your Match',
-        description: 'Take the next step towards a lifelong relationship with your perfect match!'
+        description: 'When you\'ve found the right person, take the next step. That\'s what we\'re here for.'
     }
 ];
 

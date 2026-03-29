@@ -11,22 +11,22 @@ const HomePage = () => {
         {
             icon: Shield,
             title: 'Secure & Trusted',
-            description: 'Your privacy and security are our top priorities with verified profiles and secure communication.'
+            description: 'Every profile goes through checks, and your conversations stay private. We take that seriously.'
         },
         {
             icon: Users,
             title: 'Verified Profiles',
-            description: 'All profiles are manually verified by our team to ensure authenticity and quality matches.'
+            description: 'Our team reviews each profile by hand. No bots, no fakes — just real people looking for a partner.'
         },
         {
             icon: Heart,
             title: 'Smart Matching',
-            description: 'Advanced algorithms help you find compatible matches based on your preferences and values.'
+            description: 'We suggest people based on what actually matters to you — religion, location, values, education, and more.'
         },
         {
             icon: Star,
             title: 'Premium Experience',
-            description: 'Enjoy premium features like unlimited messaging, advanced search, and priority support.'
+            description: 'Unlock messaging, detailed search filters, and priority support when you upgrade.'
         }
     ];
 
@@ -34,19 +34,19 @@ const HomePage = () => {
         {
             name: 'Priya & Rahul',
             location: 'Mumbai',
-            text: 'We found each other on Matrimony Connect and got married within 6 months. Thank you for helping us find our perfect match!',
+            text: 'We matched on Matrimony Connect and were married six months later. Honestly didn\'t think it would happen this fast.',
             rating: 5
         },
         {
             name: 'Anjali & Vikram',
             location: 'Delhi',
-            text: 'The platform made it so easy to connect with like-minded people. We are grateful for this wonderful journey.',
+            text: 'It was easy to find people who shared our values. We talked for a while, the families met, and it all just clicked.',
             rating: 5
         },
         {
             name: 'Meera & Arjun',
             location: 'Bangalore',
-            text: 'Matrimony Connect helped us find our soulmate. The verification process gave us confidence in the platform.',
+            text: 'What sold us was the verification process. You actually feel safe talking to people on here. That made all the difference.',
             rating: 5
         }
     ];
@@ -54,8 +54,8 @@ const HomePage = () => {
     return (
         <>
             <Helmet>
-                <title>Matrimony Connect - Find Your Perfect Match</title>
-                <meta name="description" content="Join thousands of people who found their life partner on Matrimony Connect. Secure, trusted, and personalized matchmaking platform." />
+                <title>Matrimony Connect - Trusted Matchmaking</title>
+                <meta name="description" content="A matchmaking platform built on trust, verification, and real connections. Browse profiles, send interests, and find your partner." />
             </Helmet>
 
             <div className="min-h-screen">                {/* Hero Section */}
@@ -78,18 +78,18 @@ const HomePage = () => {
                                     <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd"></path>
                                     </svg>
-                                    <span>1M+ Success Stories</span>
+                                    <span>Thousands of couples matched</span>
                                 </div>
                             </div>
 
-                            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">                                Begin Your Journey to{' '}
+                            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">                                Find Someone{' '}
                                 <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-400">
-                                    Finding "The One"
+                                    Worth the Wait
                                 </span>
                             </h1>
 
-                            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-white/90">                                Join millions of people who found their perfect life partner on Matrimony Connect.{' '}
-                                <span className="block mt-2 text-yellow-200 font-light">Trusted by families across the globe since 2010</span>
+                            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-white/90">                                Thousands of families have found the right match here.{' '}
+                                <span className="block mt-2 text-yellow-200 font-light">Trusted by families across India and abroad</span>
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -97,14 +97,14 @@ const HomePage = () => {
                                     to="/register"
                                     className="bg-gradient-to-r from-pink-500 to-rose-600 text-white px-8 py-4 rounded-full font-semibold hover:from-pink-600 hover:to-rose-700 transition shadow-lg hover:shadow-pink-500/30 inline-flex items-center justify-center group"
                                 >
-                                    Start Your Search
+                                    Get Started
                                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                                 </Link>
                                 <Link
                                     to="/login"
                                     className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-8 py-4 rounded-full font-semibold hover:bg-white/20 transition-colors"
                                 >
-                                    Already a Member?
+                                    Already have an account?
                                 </Link>
                             </div>
 
@@ -136,12 +136,12 @@ const HomePage = () => {
                         <div className="text-center mb-16">
                             <span className="text-pink-600 font-medium text-sm uppercase tracking-wider">Features & Benefits</span>
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-4">
-                                Find Your Perfect Match With Confidence
+                                Why People Choose Us
                             </h2>
                             <div className="h-1 w-24 bg-gradient-to-r from-pink-500 to-rose-500 mx-auto my-4 rounded-full"></div>
                             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                                Our platform combines traditional values with modern technology to help you find
-                                the most compatible life partner for a beautiful journey ahead.
+                                We combine traditional matchmaking values with modern tools so you can find
+                                someone who's genuinely compatible.
                             </p>
                         </div>
 
@@ -191,12 +191,12 @@ const HomePage = () => {
                         <div className="text-center mb-16">
                             <span className="text-pink-600 font-medium text-sm uppercase tracking-wider">Love Stories</span>
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2 mb-4">
-                                Happily Ever After Begins Here
+                                Real People, Real Stories
                             </h2>
                             <div className="h-1 w-24 bg-gradient-to-r from-pink-500 to-rose-500 mx-auto my-4 rounded-full"></div>
                             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                                Read heartwarming stories from couples who found their soulmates and
-                                began their journey of lifelong companionship through Matrimony Connect
+                                Hear from couples who connected on Matrimony Connect
+                                and decided to build a life together
                             </p>
                         </div>
 
@@ -261,14 +261,14 @@ const HomePage = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
                         <div className="bg-white/10 backdrop-blur-sm rounded-2xl py-12 px-8 border border-white/20 shadow-xl max-w-4xl mx-auto">
                             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
-                                Begin Your Journey to Forever
+                                Ready to Take the First Step?
                             </h2>
 
                             <div className="h-1 w-24 bg-white mx-auto my-6 rounded-full"></div>
 
                             <p className="text-xl mb-8 max-w-2xl mx-auto text-white/90">
-                                Join millions of people who have already found their perfect life partner.
-                                Your story is waiting to be written.
+                                Thousands of people have already found their partner through Matrimony Connect.
+                                You could be next.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -289,7 +289,7 @@ const HomePage = () => {
                             </div>
 
                             <div className="mt-8 text-white/80 text-sm">
-                                Already helping people find love in 190+ countries worldwide
+                                Connecting families in 190+ countries
                             </div>
                         </div>
                     </div>
@@ -302,7 +302,7 @@ const HomePage = () => {
                             <div>
                                 <h3 className="text-xl font-bold mb-4">Matrimony Connect</h3>
                                 <p className="text-gray-400">
-                                    Helping people find their perfect life partner with trust, security, and personalized matchmaking.
+                                    A trusted matchmaking platform where families and individuals find compatible partners with confidence.
                                 </p>
                             </div>
                             <div>

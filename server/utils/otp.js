@@ -1,11 +1,14 @@
 const twilio = require('twilio');
 const crypto = require('crypto');
 
-// Initialize Twilio client (in production, use environment variables)
-const client = twilio(
-    process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_AUTH_TOKEN
-);
+// Initialize Twilio client
+let client = null;
+if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+    client = twilio(
+        process.env.TWILIO_ACCOUNT_SID,
+        process.env.TWILIO_AUTH_TOKEN
+    );
+}
 
 // Generate numeric OTP
 const generateOTP = (length = 6) => {
@@ -119,19 +122,16 @@ const verifyOTP = (storedOTP, providedOTP) => {
     if (!storedOTP || !providedOTP) return false;
 
     // Use crypto.timingSafeEqual to prevent timing attacks
-    // This ensures the verification takes the same time regardless of how many characters match
     try {
         // Convert to Buffer for timingSafeEqual
         const storedBuffer = Buffer.from(String(storedOTP));
         const providedBuffer = Buffer.from(String(providedOTP));
 
-        // If length is different, pad the shorter one to match the longer one
         if (storedBuffer.length !== providedBuffer.length) {
-            // Simple string comparison is fine here since we're already revealing the length difference
             return storedOTP === providedOTP;
         }
 
-        // Use constant-time comparison
+
         return crypto.timingSafeEqual(storedBuffer, providedBuffer);
     } catch (error) {
         console.error('Error verifying OTP:', error);

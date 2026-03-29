@@ -19,32 +19,12 @@ const auth = async (req, res, next) => {
 
         if (!user.isActive) {
             return res.status(401).json({ message: 'Account is deactivated.' });
-        }        // Update last active timestamp in user
-        await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
-
-        // Update last active timestamp in profile
-        await Profile.findOneAndUpdate(
+        }        // Update last active on profile (lightweight)
+        Profile.findOneAndUpdate(
             { userId: user._id },
             { lastActive: new Date() },
-            { new: true }
-        );
-
-        // Track user activity with IP address and device info
-        const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        const userAgent = req.headers['user-agent'];        // Add login history (limit to 10 entries) using direct DB update to avoid versioning conflicts
-        await User.findByIdAndUpdate(user._id, {
-            $push: {
-                loginHistory: {
-                    $each: [{
-                        timestamp: new Date(),
-                        ipAddress,
-                        deviceInfo: userAgent,
-                        location: 'Unknown' // In a real app, this would use IP geolocation
-                    }],
-                    $slice: -10 // Keep only the last 10 entries
-                }
-            }
-        });
+            { timestamps: false }
+        ).catch(err => console.error('Error updating lastActive:', err));
 
         req.user = user;
         next();

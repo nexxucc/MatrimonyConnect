@@ -115,12 +115,12 @@ router.post('/register', [
         }
         // --- END AUTO-CREATE PROFILE ---
 
-        // Generate and store OTP, but do NOT send it yet
+        // Generate and store OTP, set expiry
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         user.phoneOtp = otp;
         user.emailOtp = otp;
-        user.phoneOtpExpiresAt = undefined;
-        user.emailOtpExpiresAt = undefined;
+        user.phoneOtpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        user.emailOtpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
         await user.save();
         // Do NOT send OTP here
 
@@ -148,7 +148,6 @@ router.post('/verify-otp', [
     body('phone').custom(value => {
         if (value === undefined || value === null) return true; // allow missing phone for email verification
         const trimmed = value.trim();
-        console.log('Phone received for OTP verification:', trimmed);
         if (!/^[+\d]{10,15}$/.test(trimmed)) {
             throw new Error('Invalid phone format');
         }
@@ -164,7 +163,6 @@ router.post('/verify-otp', [
         let { phone, email, otp } = req.body;
         if (email) email = normalizeGmail(email);
         if (phone) phone = phone.trim();
-        console.log('Verify OTP request:', { phone, email, otp });
         let user;
         if (phone) {
             user = await User.findOne({ phone });
@@ -174,17 +172,18 @@ router.post('/verify-otp', [
             return res.status(400).json({ message: 'Phone or email is required' });
         }
         if (!user) {
-            console.log('User not found for:', { phone, email });
             return res.status(404).json({ message: 'User not found' });
         }
         if (user.isVerified) {
             return res.status(400).json({ message: 'User already verified' });
         }
-        // Unified OTP check: accept either phoneOtp or emailOtp
-        if (user.phoneOtp === otp || user.emailOtp === otp) {
+        // Unified OTP check: accept either phoneOtp or emailOtp using secure comparison
+        if ((user.phoneOtp && verifyOTP(user.phoneOtp, otp)) || (user.emailOtp && verifyOTP(user.emailOtp, otp))) {
             user.isVerified = true;
             user.phoneOtp = undefined;
             user.emailOtp = undefined;
+            user.phoneOtpExpiresAt = undefined;
+            user.emailOtpExpiresAt = undefined;
         } else {
             return res.status(400).json({ message: 'Invalid OTP' });
         }
@@ -235,7 +234,7 @@ router.post('/login', [
         }        // Update last login
         await User.findByIdAndUpdate(user._id, {
             lastLogin: new Date(),
-            $push: { loginHistory: { time: new Date(), ip: req.ip } }
+            $push: { loginHistory: { timestamp: new Date(), ipAddress: req.ip, deviceInfo: req.headers['user-agent'], location: 'Unknown' } }
         });
 
         const token = generateToken(user._id);
@@ -349,10 +348,8 @@ router.get('/me', auth, async (req, res) => {
     }
 });
 
-// Logout (client-side token removal)
 router.post('/logout', auth, async (req, res) => {
     try {
-        // In production, you might want to blacklist the token
         res.json({ message: 'Logged out successfully' });
     } catch (error) {
         console.error('Logout error:', error);
@@ -379,7 +376,7 @@ router.post('/send-otp', async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
         if (phone) {
-            await sendUserOTP(user, 'phone', sendWhatsAppOTP);
+            await sendUserOTP(user, 'phone', sendOTP);
         } else if (email) {
             await sendUserOTP(user, 'email', sendEmail.bind(null, email, 'Your Matrimony Connect OTP'));
         }

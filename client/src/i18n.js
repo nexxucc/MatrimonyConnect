@@ -4,7 +4,7 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
     en: {
         translation: {
-            'Find Your Perfect Match': 'Find Your Perfect Match',
+            'Find Your Perfect Match': 'Trusted Matchmaking',
             'Register': 'Register',
             'Login': 'Login',
             'Dashboard': 'Dashboard',
@@ -15,12 +15,12 @@ const resources = {
             'Subscription': 'Subscription',
             'Admin': 'Admin',
             'Logout': 'Logout',
-            // ...add more as needed
+            // Add more keys as needed
         }
     },
     hi: {
         translation: {
-            'Find Your Perfect Match': 'अपना आदर्श साथी खोजें',
+            'Find Your Perfect Match': 'विश्वसनीय वैवाहिक सेवा',
             'Register': 'रजिस्टर करें',
             'Login': 'लॉगिन',
             'Dashboard': 'डैशबोर्ड',
@@ -31,7 +31,7 @@ const resources = {
             'Subscription': 'सदस्यता',
             'Admin': 'प्रशासन',
             'Logout': 'लॉगआउट',
-            // ...add more as needed
+            // Add more keys as needed
         }
     }
 };

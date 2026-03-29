@@ -190,6 +190,13 @@ const userSchema = new mongoose.Schema({
         requestDate: Date,
         scheduledDeletionDate: Date,
         reason: String
+    },
+    // Password reset
+    resetToken: {
+        type: String
+    },
+    resetTokenExpiry: {
+        type: Date
     }
 }, {
     timestamps: true

@@ -15,15 +15,6 @@ api.interceptors.request.use(
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
-
-            // Log token availability (remove in production)
-            const isProfileRequest = config.url.includes('/profiles/');
-            if (isProfileRequest) {
-                console.log('Making authenticated request to:', config.url);
-                console.log('Token available:', !!token);
-            }
-        } else {
-            console.warn('No authentication token available for request to:', config.url);
         }
         return config;
     },
@@ -49,8 +40,7 @@ api.interceptors.response.use(
 
         // Enhanced logging for network errors
         if (error.code === 'ERR_NETWORK') {
-            console.error('Network Error - Could not connect to the server. Please check if the server is running.');
-            // You could also add a global notification here
+            console.error('Network Error - Could not connect to the server.');
         }
 
         return Promise.reject(error);

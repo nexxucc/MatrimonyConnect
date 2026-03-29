@@ -403,7 +403,7 @@ profileSchema.index({ 'religiousInfo.religion': 1, 'religiousInfo.caste': 1 });
 profileSchema.index({ 'religiousInfo.religion': 1, 'religiousInfo.motherTongue': 1 });
 profileSchema.index({ 'career.profession': 1, 'career.income': 1 });
 profileSchema.index({ 'education.highestQualification': 1 });
-profileSchema.index({ isProfileApproved: 1, isActive: 1 });
+profileSchema.index({ isProfileApproved: 1, 'privacySettings.isHidden': 1 });
 profileSchema.index({ isProfileComplete: 1 });
 profileSchema.index({ 'verification.idVerified': 1 });
 

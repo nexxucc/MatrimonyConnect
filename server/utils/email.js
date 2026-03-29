@@ -162,38 +162,23 @@ const sendEmail = async (to, subject, text, html = null) => {
 
 // Send welcome email
 const sendWelcomeEmail = async (email, firstName) => {
-  const subject = 'Welcome to Matrimony Connect!';
+  const subject = 'Welcome to Matrimony Connect';
   const content = `
-    <h2>Welcome to Matrimony Connect!</h2>
-    <p>Dear ${firstName},</p>
-    <p>Thank you for joining Matrimony Connect! We're excited to help you find your perfect life partner.</p>
-    <p>To get started with your journey:</p>
+    <h2>Welcome, ${firstName}!</h2>
+    <p>Hi ${firstName},</p>
+    <p>Thanks for signing up. We're glad you're here.</p>
+    <p>Here's what to do next:</p>
     <ol>
-      <li>Complete your profile with detailed information</li>
-      <li>Upload your best photos (clear face photo recommended as primary)</li>
-      <li>Set your preferences for your ideal match</li>
-      <li>Start browsing profiles and sending interests</li>
+      <li>Fill out your profile — the more detail, the better your matches</li>
+      <li>Upload a few recent photos (a clear face photo works best as your primary)</li>
+      <li>Set your preferences so we know what you're looking for</li>
+      <li>Browse profiles and send interests to people who catch your eye</li>
     </ol>
-    <div class="stats">
-      <div class="stat-box">
-        <div class="stat-number">5M+</div>
-        <div>Members</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-number">1M+</div>
-        <div>Success Stories</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-number">100+</div>
-        <div>Countries</div>
-      </div>
-    </div>
-    <p>Our team is here to help you find your perfect match. Remember, a complete and verified profile gets <span class="highlight">10x more responses</span>!</p>
+    <p>Profiles that are fully filled out and verified tend to get significantly more responses, so it's worth spending the time.</p>
     <p>
       <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/profile/edit" class="button">Complete Your Profile</a>
     </p>
-    <p>Best wishes on your journey to find your soulmate!</p>
-    <p>Warm Regards,<br>The Matrimony Connect Team</p>
+    <p>Wishing you the best,<br>The Matrimony Connect Team</p>
   `;
 
   const html = baseEmailTemplate(content);
@@ -204,12 +189,12 @@ const sendWelcomeEmail = async (email, firstName) => {
 const sendEmailVerificationOtp = async (email, firstName, otp) => {
   const subject = 'Verify Your Email Address - Matrimony Connect';
   const content = `
-    <h2>Email Verification</h2>
-    <p>Dear ${firstName},</p>
-    <p>Thank you for registering with Matrimony Connect. Please use the following OTP to verify your email address:</p>
+    <h2>Verify Your Email</h2>
+    <p>Hi ${firstName},</p>
+    <p>Use the code below to verify your email address:</p>
     <p style="font-size: 24px; font-weight: bold; text-align: center; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">${otp}</p>
-    <p>This OTP is valid for 10 minutes. If you didn't request this verification, please ignore this email.</p>
-    <p>Best Regards,<br>The Matrimony Connect Team</p>
+    <p>This code expires in 10 minutes. If you didn't sign up for Matrimony Connect, you can safely ignore this.</p>
+    <p>Thanks,<br>Matrimony Connect</p>
   `;
 
   const html = baseEmailTemplate(content);
@@ -221,9 +206,9 @@ const sendInterestNotification = async (interestData) => {
   const { email, recipientName, senderName, senderAge, senderLocation, senderPhoto, message, interestId } = interestData;
   const subject = 'New Interest Received on Matrimony Connect';
   const content = `
-    <h2>New Interest Received!</h2>
-    <p>Dear ${recipientName},</p>
-    <p>You have received a new interest from someone who liked your profile!</p>
+    <h2>Someone's Interested</h2>
+    <p>Hi ${recipientName},</p>
+    <p>You've got a new interest on your profile.</p>
     
     <div class="profile-card">
       ${senderPhoto ? `<img src="${senderPhoto}" alt="${senderName}" class="profile-image" />` : ''}
@@ -232,11 +217,11 @@ const sendInterestNotification = async (interestData) => {
       ${message ? `<p><strong>Message:</strong> "${message}"</p>` : ''}
     </div>
     
-    <p>Login to your account to view the complete profile and respond to this interest.</p>
+    <p>Log in to see their full profile and respond.</p>
     <p>
       <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/interests/${interestId}" class="button">View Interest</a>
     </p>
-    <p>Best Regards,<br>The Matrimony Connect Team</p>
+    <p>Thanks,<br>Matrimony Connect</p>
   `;
 
   const html = baseEmailTemplate(content);
@@ -248,10 +233,10 @@ const sendInterestResponseNotification = async (email, recipientName, responderN
   const subject = `Interest ${response === 'accepted' ? 'Accepted' : 'Declined'} on Matrimony Connect`;
   const content = `
     <h2>Interest ${response === 'accepted' ? 'Accepted' : 'Declined'}</h2>
-    <p>Dear ${recipientName},</p>
+    <p>Hi ${recipientName},</p>
     ${response === 'accepted' ?
-      `<p>${responderName} has accepted your interest. You can now start chatting!</p>` :
-      `<p>${responderName} has declined your interest. Don't worry, there are many more compatible profiles waiting for you.</p>`
+      `<p>${responderName} accepted your interest. You can now start a conversation.</p>` :
+      `<p>${responderName} has declined your interest. Keep looking — there are plenty of other profiles worth checking out.</p>`
     }
     
     ${responderPhoto && response === 'accepted' ? `<img src="${responderPhoto}" alt="${responderName}" class="profile-image" />` : ''}
@@ -261,11 +246,11 @@ const sendInterestResponseNotification = async (email, recipientName, responderN
         <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/chat" class="button">Start Chatting</a>
       </p>` :
       `<p>
-        <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/search" class="button">Continue Searching</a>
+        <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/search" class="button">Browse Profiles</a>
       </p>`
     }
     
-    <p>Best Regards,<br>The Matrimony Connect Team</p>
+    <p>Thanks,<br>Matrimony Connect</p>
   `;
 
   const html = baseEmailTemplate(content);
@@ -290,17 +275,17 @@ const sendMatchAlert = async (email, recipientName, matches) => {
   });
 
   const content = `
-    <h2>New Matches Found!</h2>
-    <p>Dear ${recipientName},</p>
-    <p>We found ${matches.length} new potential matches for you based on your preferences:</p>
+    <h2>New Matches for You</h2>
+    <p>Hi ${recipientName},</p>
+    <p>We found ${matches.length} new profiles that match your preferences:</p>
     
     ${matchesHTML}
     
-    <p>Login to your account to view their complete profiles and express your interest.</p>
+    <p>Log in to see their full profiles and send an interest if someone stands out.</p>
     <p>
-      <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/matches" class="button">View All Matches</a>
+      <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/matches" class="button">View Matches</a>
     </p>
-    <p>Best Regards,<br>The Matrimony Connect Team</p>
+    <p>Thanks,<br>Matrimony Connect</p>
   `;
 
   const html = baseEmailTemplate(content);
@@ -314,39 +299,25 @@ const sendProfileApprovalEmail = async (email, recipientName, isApproved, reason
     : 'Profile Update Required - Matrimony Connect';
 
   const content = isApproved ? `
-    <h2 style="color: #4caf50;">Profile Approved!</h2>
-    <p>Dear ${recipientName},</p>
-    <p>Congratulations! Your profile has been approved and is now visible to other members.</p>
-    <p>You can now start receiving interests and connecting with potential matches.</p>
-    <div class="stats">
-      <div class="stat-box">
-        <div class="stat-number">10x</div>
-        <div>More Views</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-number">5x</div>
-        <div>More Interests</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-number">100%</div>
-        <div>More Trust</div>
-      </div>
-    </div>
-    <p>Want to boost your profile visibility even more?</p>
+    <h2 style="color: #4caf50;">Your Profile is Live</h2>
+    <p>Hi ${recipientName},</p>
+    <p>Good news — your profile has been reviewed and approved. It's now visible to other members on the platform.</p>
+    <p>You'll start receiving interests and can begin connecting with people who match your preferences.</p>
+    <p>If you'd like to stand out more, consider upgrading your membership for added visibility.</p>
     <p>
-      <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/subscription" class="button">Upgrade Membership</a>
+      <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/subscription" class="button">Explore Plans</a>
     </p>
-    <p>Best Regards,<br>The Matrimony Connect Team</p>
+    <p>Thanks,<br>Matrimony Connect</p>
   ` : `
-    <h2 style="color: #f44336;">Profile Update Required</h2>
-    <p>Dear ${recipientName},</p>
-    <p>Your profile requires some updates before it can be approved.</p>    ${getReasonBlock(reason)}
-    <p>Please login to your account and update your profile accordingly. Once updated, your profile will be reviewed again.</p>
+    <h2 style="color: #f44336;">Profile Update Needed</h2>
+    <p>Hi ${recipientName},</p>
+    <p>We reviewed your profile but it needs a few changes before we can make it live.</p>    ${getReasonBlock(reason)}
+    <p>Please log in and update your profile. Once you've made the changes, we'll review it again.</p>
     <p>
       <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/profile/edit" class="button">Update Profile</a>
     </p>
-    <p>If you have any questions, please contact our support team.</p>
-    <p>Best Regards,<br>The Matrimony Connect Team</p>
+    <p>If you have any questions, reach out to our support team.</p>
+    <p>Thanks,<br>Matrimony Connect</p>
   `;
 
   const html = baseEmailTemplate(content);
@@ -363,26 +334,26 @@ const sendSubscriptionRenewalReminder = async (email, recipientName, plan, expir
   const daysRemaining = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
 
   const content = `
-    <h2>Subscription Renewal Reminder</h2>
-    <p>Dear ${recipientName},</p>
-    <p>Your ${plan} subscription will expire in <strong>${daysRemaining} days</strong>.</p>
-    <p>Don't miss out on connecting with potential matches! Renew your subscription to continue enjoying premium features:</p>
+    <h2>Your Subscription is Ending Soon</h2>
+    <p>Hi ${recipientName},</p>
+    <p>Just a heads-up: your ${plan} subscription expires in <strong>${daysRemaining} days</strong>.</p>
+    <p>If you renew, you'll keep access to:</p>
     <ul>
-      <li>Send unlimited interests</li>
-      <li>Chat with interested members</li>
-      <li>View contact details of members</li>
-      <li>Get highlighted in search results</li>
-      <li>Access advanced matchmaking</li>
+      <li>Unlimited interests</li>
+      <li>Chat with members who've accepted your interest</li>
+      <li>Viewing contact details</li>
+      <li>Highlighted search results</li>
+      <li>Advanced match filters</li>
     </ul>
     ${discountCode ? `
     <div style="background-color: #fff8e1; padding: 10px; border-left: 4px solid #ffc107; margin: 15px 0;">
-      <p><strong>Special Offer!</strong> Use code <span style="background: #ffc107; padding: 2px 8px; font-weight: bold;">${discountCode}</span> to get 20% off on renewal.</p>
+      <p>Use code <span style="background: #ffc107; padding: 2px 8px; font-weight: bold;">${discountCode}</span> for 20% off your renewal.</p>
     </div>
     ` : ''}
     <p>
       <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/subscription/renew" class="button">Renew Subscription</a>
     </p>
-    <p>Best Regards,<br>The Matrimony Connect Team</p>
+    <p>Thanks,<br>Matrimony Connect</p>
   `;
 
   const html = baseEmailTemplate(content);
@@ -394,9 +365,9 @@ const sendWeeklySummary = async (email, recipientName, stats) => {
   const subject = 'Your Weekly Activity Summary - Matrimony Connect';
 
   const content = `
-    <h2>Your Weekly Activity Summary</h2>
-    <p>Dear ${recipientName},</p>
-    <p>Here's your account activity summary for the past week:</p>
+    <h2>Your Week in Review</h2>
+    <p>Hi ${recipientName},</p>
+    <p>Here's a quick look at your activity over the past week:</p>
     
     <div class="stats">
       <div class="stat-box">
@@ -415,21 +386,21 @@ const sendWeeklySummary = async (email, recipientName, stats) => {
     
     <div class="divider"></div>
     
-    <h3>Your Profile Performance</h3>
-    <p>Your profile is performing better than ${stats.performancePercentage}% of similar profiles!</p>
+    <h3>How Your Profile is Doing</h3>
+    <p>You're ahead of ${stats.performancePercentage}% of profiles with similar criteria.</p>
     
-    <p>Tips to improve your profile:</p>
+    <p>A few things that could help:</p>
     <ul>
-      ${stats.completionPercentage < 100 ? `<li>Complete your profile (currently ${stats.completionPercentage}% complete)</li>` : ''}
-      ${stats.photoCount < 3 ? `<li>Add more photos (currently ${stats.photoCount} photos)</li>` : ''}
-      ${!stats.aboutMeComplete ? `<li>Add a detailed "About Me" description</li>` : ''}
-      ${!stats.partnerPreferencesComplete ? `<li>Define your partner preferences clearly</li>` : ''}
+      ${stats.completionPercentage < 100 ? `<li>Your profile is ${stats.completionPercentage}% complete — filling in the rest will help</li>` : ''}
+      ${stats.photoCount < 3 ? `<li>You have ${stats.photoCount} photo${stats.photoCount === 1 ? '' : 's'} — adding more gives a better first impression</li>` : ''}
+      ${!stats.aboutMeComplete ? `<li>Write something in your "About Me" section</li>` : ''}
+      ${!stats.partnerPreferencesComplete ? `<li>Fill in your partner preferences so we can suggest better matches</li>` : ''}
     </ul>
     
     <p>
-      <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/dashboard" class="button">Check Your Dashboard</a>
+      <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/dashboard" class="button">Go to Dashboard</a>
     </p>
-    <p>Best Regards,<br>The Matrimony Connect Team</p>
+    <p>Thanks,<br>Matrimony Connect</p>
   `;
 
   const html = baseEmailTemplate(content);
@@ -441,17 +412,17 @@ const sendPasswordResetEmail = async (email, recipientName, resetToken) => {
   const subject = 'Password Reset Request - Matrimony Connect';
 
   const content = `
-    <h2>Password Reset Request</h2>
-    <p>Dear ${recipientName},</p>
-    <p>We received a request to reset your Matrimony Connect account password. Click the button below to reset your password:</p>
+    <h2>Password Reset</h2>
+    <p>Hi ${recipientName},</p>
+    <p>We got a request to reset your password. Click below to set a new one:</p>
     
     <p style="text-align: center;">
-      <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/reset-password/${resetToken}" class="button">Reset Your Password</a>
+      <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/reset-password/${resetToken}" class="button">Reset Password</a>
     </p>
     
-    <p>This password reset link is valid for 30 minutes.</p>
-    <p>If you didn't request a password reset, please ignore this email or contact our support team if you have concerns.</p>
-    <p>Best Regards,<br>The Matrimony Connect Team</p>
+    <p>This link expires in 30 minutes.</p>
+    <p>If you didn't request this, just ignore this email — your password won't change.</p>
+    <p>Thanks,<br>Matrimony Connect</p>
   `;
 
   const html = baseEmailTemplate(content);
@@ -465,29 +436,28 @@ const sendSuccessStoryApproval = async (email, coupleName, isApproved) => {
     : 'Success Story Update Required - Matrimony Connect';
 
   const content = isApproved ? `
-    <h2 style="color: #4caf50;">Success Story Published!</h2>
-    <p>Dear ${coupleName},</p>
-    <p>Congratulations! Your success story has been approved and is now published on our website.</p>
-    <p>Thank you for sharing your journey with our community. Your story will inspire many others on their path to finding love.</p>
+    <h2 style="color: #4caf50;">Your Story is Live</h2>
+    <p>Hi ${coupleName},</p>
+    <p>Your success story has been approved and is now published on the site.</p>
+    <p>Thanks for sharing it with the community — stories like yours make a real difference for people still searching.</p>
     <p>
       <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/success-stories" class="button">View Success Stories</a>
     </p>
-    <p>We wish you a lifetime of happiness together!</p>
-    <p>Best Regards,<br>The Matrimony Connect Team</p>
+    <p>Wishing you both all the best,<br>Matrimony Connect</p>
   ` : `
-    <h2>Success Story Update Required</h2>
-    <p>Dear ${coupleName},</p>
-    <p>Thank you for sharing your success story with us. We need some additional information or adjustments before we can publish it:</p>
+    <h2>A Few Changes Needed on Your Story</h2>
+    <p>Hi ${coupleName},</p>
+    <p>Thanks for submitting your success story. Before we can publish it, we'd appreciate a few edits:</p>
     <ol>
-      <li>Please ensure all photos are clear and appropriate</li>
-      <li>Include more details about how you met through our platform</li>
-      <li>Share some special moments from your journey together</li>
+      <li>Make sure all photos are clear and appropriate</li>
+      <li>Add some detail about how you connected through the platform</li>
+      <li>Share a memorable moment from your time getting to know each other</li>
     </ol>
-    <p>You can edit your submission by clicking the button below:</p>
+    <p>You can update your submission here:</p>
     <p>
       <a href="${process.env.WEBSITE_URL || 'https://matrimonyconnect.com'}/success-stories/edit" class="button">Edit Your Story</a>
     </p>
-    <p>Best Regards,<br>The Matrimony Connect Team</p>
+    <p>Thanks,<br>Matrimony Connect</p>
   `;
 
   const html = baseEmailTemplate(content);
@@ -506,11 +476,11 @@ const sendChatNotification = async (recipientEmail, senderName, messagePreview) 
     <div class="button-container">
       <a href="${process.env.FRONTEND_URL}/chat" class="button">View Message</a>
     </div>
-    <p>Don't keep them waiting! Respond promptly to keep the conversation going.</p>
-    <p>Please note that this is an automated notification. Do not reply to this email.</p>
+    <p>You might want to reply soon so the conversation keeps going.</p>
+    <p>This is an automated notification. Please do not reply to this email.</p>
   `);
 
-  return sendEmail(recipientEmail, subject, htmlContent);
+  return sendEmail(recipientEmail, subject, '', htmlContent);
 };
 
 // Send success story notification to admin
@@ -528,7 +498,7 @@ const sendSuccessStoryNotification = async (adminEmail, userName, storyTitle) =>
     <p>Please review this submission at your earliest convenience.</p>
   `);
 
-  return sendEmail(adminEmail, subject, htmlContent);
+  return sendEmail(adminEmail, subject, '', htmlContent);
 };
 
 // Send success story approval notification
@@ -540,10 +510,9 @@ const sendSuccessStoryApprovalNotification = async (recipientEmail, storyTitle, 
   let content;
   if (isApproved) {
     content = `
-      <h2>Congratulations! Your Success Story Has Been Approved</h2>
       <p>Hello,</p>
-      <p>We're delighted to inform you that your success story titled <strong>${storyTitle}</strong> has been approved and is now live on Matrimony Connect!</p>
-      <p>Thank you for sharing your inspiring journey with our community. Your story will help inspire others in their search for a life partner.</p>
+      <p>Your success story titled <strong>${storyTitle}</strong> has been approved and is now live on Matrimony Connect.</p>
+      <p>Thanks for sharing your experience. It means a lot to the community.</p>
       <div class="button-container">
         <a href="${process.env.FRONTEND_URL}/success-stories" class="button">View Success Stories</a>
       </div>
@@ -562,7 +531,7 @@ const sendSuccessStoryApprovalNotification = async (recipientEmail, storyTitle, 
   }
 
   const htmlContent = baseEmailTemplate(content);
-  return sendEmail(recipientEmail, subject, htmlContent);
+  return sendEmail(recipientEmail, subject, '', htmlContent);
 };
 
 module.exports = {

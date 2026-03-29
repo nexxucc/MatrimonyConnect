@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const {
     sendUserOTP,
+    sendOTP,
     sendWhatsAppOTP,
     verifyOTP,
     isOTPValid,
@@ -52,7 +53,7 @@ router.post('/', [
         }
 
         // Get client IP address for rate limiting
-        const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         const identifier = email || phone || clientIp;
 
         // Check rate limit (5 attempts per hour)
@@ -75,7 +76,7 @@ router.post('/', [
                 await sendUserOTP(user, 'phone', sendWhatsAppOTP);
             } else {
                 // Default to SMS
-                await sendUserOTP(user, 'phone', sendWhatsAppOTP);
+                await sendUserOTP(user, 'phone', sendOTP);
             }
 
             // Log activity
@@ -176,7 +177,7 @@ router.post('/verify', [
             // Log failed attempt
             await logActivity({
                 user: user._id,
-                type: 'verification_failed',
+                type: 'other',
                 description: `Failed OTP verification for ${phone ? 'phone' : 'email'}`
             });
 
@@ -212,7 +213,7 @@ router.post('/verify', [
         // Log successful verification
         await logActivity({
             user: user._id,
-            type: phone ? 'phone_verified' : 'email_verified',
+            type: phone ? 'phone_verification' : 'email_verification',
             description: `Successfully verified ${phone ? 'phone' : 'email'}`
         });
 
@@ -262,7 +263,7 @@ router.post('/resend', [
         }
 
         // Get client IP address for rate limiting
-        const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         const identifier = email || phone || clientIp;
 
         // More strict rate limit for resends (3 attempts per hour)
@@ -285,7 +286,7 @@ router.post('/resend', [
                 await sendUserOTP(user, 'phone', sendWhatsAppOTP);
             } else {
                 // Default to SMS
-                await sendUserOTP(user, 'phone', sendWhatsAppOTP);
+                await sendUserOTP(user, 'phone', sendOTP);
             }
         } else {
             user = await User.findOne({ email });
@@ -330,7 +331,7 @@ router.get('/status', auth, async (req, res) => {
                 ...(user.phoneOtpExpiresAt && { expiresAt: user.phoneOtpExpiresAt })
             },
             isEmailVerified: user.isVerified,
-            isPhoneVerified: false // This would come from the profile if implemented
+            isPhoneVerified: false
         });
 
     } catch (error) {

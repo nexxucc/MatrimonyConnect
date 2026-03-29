@@ -91,16 +91,12 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
     res.status(404).json({ message: 'Route not found' });
 });
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/matrimony-connect', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/matrimony-connect')
     .then(() => {
         console.log('Connected to MongoDB');
         app.listen(PORT, () => {

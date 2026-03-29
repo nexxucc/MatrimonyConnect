@@ -78,7 +78,7 @@ const AdminProfilesPage = () => {
                                 <td className="px-4 py-2">{profile.religion}</td>
                                 <td className="px-4 py-2">{profile.caste}</td>
                                 <td className="px-4 py-2 capitalize">{profile.status}</td>
-                                <td className="px-4 py-2">{profile.isVerified ? '✅' : '❌'}</td>
+                                <td className="px-4 py-2">{profile.isVerified ? 'Yes' : 'No'}</td>
                                 <td className="px-4 py-2 space-x-2">
                                     {profile.status === 'pending' && (
                                         <>

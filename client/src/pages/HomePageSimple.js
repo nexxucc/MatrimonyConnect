@@ -10,19 +10,19 @@ const HomePageSimple = () => {
     return (
         <>
             <Helmet>
-                <title>Matrimony Connect - Find Your Perfect Match</title>
-                <meta name="description" content="Join thousands of people who found their life partner on Matrimony Connect. Secure, trusted, and personalized matchmaking platform." />
+                <title>Matrimony Connect - Trusted Matchmaking</title>
+                <meta name="description" content="A matchmaking platform built on trust, verification, and real connections. Browse profiles, send interests, and find your partner." />
             </Helmet>
 
             <div className="min-h-screen bg-pink-100">
                 <div className="container mx-auto px-4 py-28">
                     <div className="text-center">
                         <h1 className="text-4xl md:text-6xl font-bold mb-6 text-pink-700">
-                            Begin Your Journey to Finding "The One"
+                            Find Someone Worth the Wait
                         </h1>
 
                         <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-gray-700">
-                            Join millions of people who found their perfect life partner on Matrimony Connect.
+                            Thousands of families have found the right match on Matrimony Connect.
                         </p>
 
                         <div className="flex justify-center">

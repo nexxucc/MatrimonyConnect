@@ -59,8 +59,8 @@ function App() {
         <I18nextProvider i18n={i18n}>
             <LanguageSwitcher />
             <Helmet>
-                <title>Matrimony Connect - Find Your Perfect Match</title>
-                <meta name="description" content="Join thousands of people who found their life partner on Matrimony Connect. Secure, trusted, and personalized matchmaking platform." />
+                <title>Matrimony Connect - Trusted Matchmaking</title>
+                <meta name="description" content="A matchmaking platform built on trust, verification, and real connections. Browse profiles, send interests, and find your partner." />
             </Helmet>            <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<HomePageSimple />} />

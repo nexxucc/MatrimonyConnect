@@ -16,13 +16,13 @@ exports.premiumCheck = async (req, res, next) => {
                 user.subscription.plan === 'gold' ||
                 user.subscription.plan === 'platinum') &&
             user.subscription.isActive &&
-            new Date(user.subscription.endDate) > new Date();
+            user.subscription.endDate && new Date(user.subscription.endDate) > new Date();
 
         if (!isPremium) {
             return res.status(403).json({
                 message: 'This feature requires a premium subscription',
                 upgradeInfo: {
-                    currentPlan: user.subscription.plan,
+                    currentPlan: user.subscription?.plan || 'free',
                     upgradeOptions: ['premium', 'gold', 'platinum']
                 }
             });

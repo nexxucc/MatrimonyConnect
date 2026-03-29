@@ -17,7 +17,6 @@ async function logActivity({ user, type, target, targetModel, description, meta,
             deviceInfo
         });
     } catch (err) {
-        // Optionally log error
         console.error('Activity log error:', err);
     }
 }
@@ -112,7 +111,7 @@ async function logChatActivity({ senderId, receiverId, chatId, messageId, device
     // Log for sender
     await logActivity({
         user: senderId,
-        type: 'chat_message',
+        type: 'chat_message_sent',
         target: chatId,
         targetModel: 'Chat',
         description: 'Sent a message',
@@ -126,7 +125,7 @@ async function logChatActivity({ senderId, receiverId, chatId, messageId, device
     // Log for receiver
     await logActivity({
         user: receiverId,
-        type: 'chat_message',
+        type: 'chat_message_received',
         target: chatId,
         targetModel: 'Chat',
         description: 'Received a message',
@@ -145,7 +144,7 @@ async function logChatActivity({ senderId, receiverId, chatId, messageId, device
 async function logSearchActivity({ userId, searchParams, resultCount, deviceInfo }) {
     return logActivity({
         user: userId,
-        type: 'search',
+        type: 'search_performed',
         description: 'Performed a search',
         meta: {
             searchParams,
@@ -163,7 +162,7 @@ async function logSearchActivity({ userId, searchParams, resultCount, deviceInfo
 async function logSubscriptionActivity({ userId, planName, duration, amount, paymentId, deviceInfo }) {
     return logActivity({
         user: userId,
-        type: 'subscription',
+        type: 'subscription_change',
         target: paymentId,
         targetModel: 'Payment',
         description: `Subscribed to ${planName} plan`,

@@ -60,10 +60,22 @@ router.post('/', auth, [
         try {
             const fromProfile = await Profile.findOne({ userId: req.user._id });
             const toUser = await User.findById(toUserId);
+            const toProfile = await Profile.findOne({ userId: toUserId });
 
-            if (fromProfile && toUser) {
+            if (fromProfile && toUser && toProfile) {
                 const senderName = `${fromProfile.basicInfo.firstName} ${fromProfile.basicInfo.lastName}`;
-                await sendInterestNotification(toUser.email, senderName, message);
+                const recipientName = `${toProfile.basicInfo.firstName} ${toProfile.basicInfo.lastName}`;
+                const primaryPhoto = fromProfile.photos.find(p => p.isPrimary);
+                await sendInterestNotification({
+                    email: toUser.email,
+                    recipientName,
+                    senderName,
+                    senderAge: fromProfile.age,
+                    senderLocation: `${fromProfile.location.city}, ${fromProfile.location.state}`,
+                    senderPhoto: primaryPhoto ? primaryPhoto.url : null,
+                    message: message || '',
+                    interestId: interest._id
+                });
             }
         } catch (emailError) {
             console.error('Failed to send interest notification email:', emailError);
@@ -97,21 +109,27 @@ router.get('/received', auth, async (req, res) => {
         const interests = await Interest.find(query)
             .populate({
                 path: 'fromUser',
-                select: 'email phone role subscription'
-            })
-            .populate({
-                path: 'fromUser',
-                select: 'basicInfo firstName lastName photos location religiousInfo education career',
-                model: 'Profile'
+                select: 'email phone role subscription name'
             })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));
 
+        // Attach profile data for each sender
+        const enriched = await Promise.all(interests.map(async (interest) => {
+            const obj = interest.toObject();
+            if (interest.fromUser) {
+                const profile = await Profile.findOne({ userId: interest.fromUser._id })
+                    .select('basicInfo photos location religiousInfo education career');
+                obj.fromUserProfile = profile;
+            }
+            return obj;
+        }));
+
         const total = await Interest.countDocuments(query);
 
         res.json({
-            interests,
+            interests: enriched,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages: Math.ceil(total / limit),
@@ -141,21 +159,27 @@ router.get('/sent', auth, async (req, res) => {
         const interests = await Interest.find(query)
             .populate({
                 path: 'toUser',
-                select: 'email phone role subscription'
-            })
-            .populate({
-                path: 'toUser',
-                select: 'basicInfo firstName lastName photos location religiousInfo education career',
-                model: 'Profile'
+                select: 'email phone role subscription name'
             })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));
 
+        // Attach profile data for each recipient
+        const enriched = await Promise.all(interests.map(async (interest) => {
+            const obj = interest.toObject();
+            if (interest.toUser) {
+                const profile = await Profile.findOne({ userId: interest.toUser._id })
+                    .select('basicInfo photos location religiousInfo education career');
+                obj.toUserProfile = profile;
+            }
+            return obj;
+        }));
+
         const total = await Interest.countDocuments(query);
 
         res.json({
-            interests,
+            interests: enriched,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages: Math.ceil(total / limit),
@@ -211,7 +235,7 @@ router.put('/:interestId/respond', auth, [
         await interest.save();
 
         // Log activity
-        await logActivity({ user: req.user._id, type: 'interest_responded', target: interest._id, targetModel: 'Interest', description: `Interest ${status}`, details: { status, message } });
+        await logActivity({ user: req.user._id, type: status === 'accepted' ? 'interest_accepted' : 'interest_declined', target: interest._id, targetModel: 'Interest', description: `Interest ${status}` });
 
         res.json({
             message: `Interest ${status} successfully`,
@@ -247,7 +271,7 @@ router.put('/:interestId/withdraw', auth, async (req, res) => {
         await interest.save();
 
         // Log activity
-        await logActivity({ user: req.user._id, type: 'interest_withdrawn', target: interest._id, targetModel: 'Interest', description: 'Interest withdrawn' });
+        await logActivity({ user: req.user._id, type: 'interest_sent', target: interest._id, targetModel: 'Interest', description: 'Interest withdrawn' });
 
         res.json({
             message: 'Interest withdrawn successfully',
@@ -278,7 +302,7 @@ router.put('/:interestId/read', auth, async (req, res) => {
         await interest.save();
 
         // Log activity
-        await logActivity({ user: req.user._id, type: 'interest_read', target: interest._id, targetModel: 'Interest', description: 'Interest marked as read' });
+        await logActivity({ user: req.user._id, type: 'interest_received', target: interest._id, targetModel: 'Interest', description: 'Interest marked as read' });
 
         res.json({
             message: 'Interest marked as read',

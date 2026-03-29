@@ -38,14 +38,14 @@ router.post('/', auth, [
     body('basicInfo.lastName').notEmpty().trim(),
     body('basicInfo.dateOfBirth').isISO8601(),
     body('basicInfo.gender').isIn(['male', 'female']),
-    body('basicInfo.maritalStatus').isIn(['never_married', 'divorced', 'widowed', 'awaiting_divorce']),
+    body('basicInfo.maritalStatus').isIn(['never_married', 'divorced', 'widowed', 'awaiting_divorce', 'annulled']),
     body('location.country').notEmpty(),
     body('location.state').notEmpty(),
     body('location.city').notEmpty(),
     body('religiousInfo.religion').notEmpty(),
     body('education.highestQualification').notEmpty(),
     body('career.profession').notEmpty(),
-    body('career.income').isIn(['below_5_lakhs', '5_10_lakhs', '10_15_lakhs', '15_25_lakhs', '25_50_lakhs', 'above_50_lakhs'])
+    body('career.income').isIn(['below_5_lakhs', '5_10_lakhs', '10_15_lakhs', '15_25_lakhs', '25_50_lakhs', '50_75_lakhs', '75_100_lakhs', 'above_100_lakhs', 'prefer_not_to_say'])
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -94,8 +94,6 @@ router.get('/me', auth, async (req, res) => {
             .populate('userId', 'email phone role subscription');
 
         if (!profile) {
-            // Instead of creating a basic profile automatically, return a 404
-            // This will allow the frontend to redirect to the profile creation page
             return res.status(404).json({ message: 'Profile not found' });
         }
 
@@ -108,14 +106,8 @@ router.get('/me', auth, async (req, res) => {
 
 // Get Profile by ID (for viewing other profiles)
 router.get('/:profileId', auth, async (req, res) => {
-    // Log auth details for debugging
-    console.log('Auth info for profile request:', {
-        userId: req.user?._id,
-        userEmail: req.user?.email,
-        isAuthenticated: !!req.user
-    });
     try {
-        console.log(`Fetching profile with ID: ${req.params.profileId}`);
+
 
         // Check if it's a valid MongoDB ObjectId
         if (!req.params.profileId.match(/^[0-9a-fA-F]{24}$/)) {
@@ -126,13 +118,11 @@ router.get('/:profileId', auth, async (req, res) => {
             .populate('userId', 'email phone role subscription');
 
         if (!profile) {
-            console.log(`Profile not found for ID: ${req.params.profileId}`);
             return res.status(404).json({ message: 'Profile not found' });
         }
 
         // Check if profile is approved and visible - but allow the owner to see their own profile
         if (!profile.isProfileApproved && profile.userId._id.toString() !== req.user._id.toString()) {
-            console.log(`Profile not approved: ${req.params.profileId}`);
             return res.status(403).json({ message: 'This profile is not yet approved or visible' });
         }// Apply privacy settings - provide a restricted public view if not authenticated
         let publicProfile;
@@ -143,8 +133,6 @@ router.get('/:profileId', auth, async (req, res) => {
             publicProfile = applyPrivacySettings(profile, null);
         }
 
-        // Log successful profile fetch
-        console.log(`Successfully fetched profile: ${req.params.profileId}`);
 
         // Return the profile data directly (not nested)
         res.json(publicProfile);

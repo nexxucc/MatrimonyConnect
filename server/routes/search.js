@@ -769,9 +769,8 @@ router.get('/premium-matches', auth, premiumCheck, async (req, res) => {
             return res.status(404).json({ message: 'Please complete your profile first' });
         }
 
-        // Use AI-like matching logic with more precise criteria
-        // This would normally involve machine learning in a real system
-        // but we simulate it with a more detailed matching algorithm
+        // Match scoring based on user preferences
+        // using a weighted matching algorithm
 
         // Get the top 20% of possible matches
         const query = {

@@ -1,5 +1,5 @@
 const express = require('express');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 const Payment = require('../models/Payment');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
@@ -9,10 +9,13 @@ const crypto = require('crypto');
 
 const router = express.Router();
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+let razorpay = null;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET
+    });
+}
 
 // Dummy create order
 router.post('/create-order', auth, async (req, res) => {
@@ -26,22 +29,28 @@ router.post('/verify', auth, async (req, res) => {
     // Save dummy payment
     await Payment.create({
         user: req.user._id,
-        amount,
+        amount: amount || 0,
         currency: 'INR',
-        status: 'success',
-        orderId: 'dummy_order',
-        paymentId: 'dummy_payment',
+        paymentStatus: 'completed',
+        paymentMethod: 'card',
+        orderId: 'dummy_order_' + Date.now(),
+        paymentId: 'dummy_payment_' + Date.now(),
         signature: 'dummy_signature',
-        plan
+        transactionId: 'dummy_txn_' + Date.now(),
+        plan: plan || 'premium',
+        subscriptionStart: new Date(),
+        subscriptionEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        isActive: true
     });
     // Update user subscription
-    req.user.subscription = {
-        plan,
+    const user = await User.findById(req.user._id);
+    user.subscription = {
+        plan: plan || 'premium',
         startDate: new Date(),
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         isActive: true
     };
-    await req.user.save();
+    await user.save();
     res.json({ message: 'Dummy payment verified and subscription activated' });
 });
 
@@ -187,7 +196,7 @@ router.post('/cancel', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
 
-        if (!user.subscription.isActive) {
+        if (!user.subscription || !user.subscription.isActive) {
             return res.status(400).json({ message: 'No active subscription to cancel' });
         }
 
